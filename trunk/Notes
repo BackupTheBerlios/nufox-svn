@@ -1,0 +1,4 @@
+* add XForm support
+* add wrappers for trees, lists, menus
+* add decent eventHandler logic to xul classes
+* port the nevow traceback page to XUL!!
