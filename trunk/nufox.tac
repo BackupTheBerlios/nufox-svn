@@ -17,7 +17,7 @@ class Examples(rend.Page):
     def data_examples(self, ctx, data):
         l = []
         for mod in os.listdir('examples'):
-            if mod == '__init__.py' or mod.endswith('pyc'):
+            if mod == '__init__.py' or not mod.endswith('py'):
                 continue
             imp = "from examples.%s import example" % (mod[:-3],)
             print "IMP", imp

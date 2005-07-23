@@ -1,21 +1,43 @@
-from nevow import rend, loaders, inevow, tags as T
+from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
 
 x = xmlstan.PrimaryNamespace('xul')
 
-class XULPage(rend.Page):
-
+class XULPage(livepage.LivePage):
+    js = None #a string of js which will be included at the start of the page.
+    jsIncludes = None #a list of .js files which will be included.
+    jsFuncs = None #a list of jsFunc names which will be wrapped in livepage.js
+                   #and added to self
+    
     def beforeRender(self, ctx):
+        if self.jsFuncs is not None:
+            for func in self.jsFuncs:
+                if hasattr(self, func):
+                    raise RuntimeError, "failing to overwrite self.%s" % (func,)
+                setattr(self, func, livepage.js(func))
         inevow.IRequest(ctx).setHeader("Content-Type", 
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
+            
+        #Do something a bit ugly...
+        if self.js is not None:
+            self.window.children.insert(0,
+                T.script(type="application/x-javascript")[self.js])
+        if self.jsIncludes is not None:
+            [self.window.children.insert(0,
+                T.script(type="application/x-javascript", src=js)) 
+                for js in self.jsIncludes or []]
+        #.. end ugly
+        
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
             self.window])
-
+    
+    
 class GenericWidget(rend.Fragment):
     
     def __init__(self, ID=None):
         self.children = []
+        self.handlers = {}
         if ID is None:
             self.id = id(self)
         else:
@@ -23,13 +45,21 @@ class GenericWidget(rend.Fragment):
             
     def append(self, w):
         self.children.append(w)
+        return self
 
     def getDocFactory(self):
-        print self.__class__.__name__
         return loaders.stan(self.getTag()[self.children])
     
     docFactory = property(getDocFactory)
 
+    def callWithContext(self, func, *args, **kwargs):
+        """Called with the js node as context."""
+        args = [livepage.document.getElementById(self.id)] + args
+        func(*args, **kwargs)
+   
+    def addHandler(self, event, handler, *jsStrings):
+        self.handlers[event] = livepage.handler(handler, *jsStrings)
+   
 # create evert tag class at runtime..
 class _(GenericWidget):
     
@@ -42,6 +72,7 @@ class _(GenericWidget):
         self.kwargs = kwargs
         
     def getTag(self):
+        self.kwargs.update(self.handlers)
         return getattr(x, self.tag)(**self.kwargs)
 
 g = globals()
@@ -77,7 +108,20 @@ class Window(GenericWidget):
         kwargs.update({'id' : self.id,
             'xmlns' : 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'})
         self.kwargs = kwargs
+       
+    #Taken form livepage..
+    
+    def render_liveid(self, ctx, data):
+        return T.script(type="text/javascript")[
+            "var nevow_clientHandleId = '", livepage.IClientHandle(
+                ctx).handleId, "';"]
+
+    def render_liveglue(self, ctx, data):
+        return T.script(src=url.here.child('nevow_glue.js'))
         
     def getTag(self):
-        return x.window(**self.kwargs)
+        self.kwargs.update(self.handlers)
+        return x.window(**self.kwargs)[
+            T.invisible(render=T.directive('liveid')),
+            T.invisible(render=T.directive('liveglue'))]
 
