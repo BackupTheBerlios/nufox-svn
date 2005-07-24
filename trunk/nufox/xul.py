@@ -9,15 +9,20 @@ class XULPage(livepage.LivePage):
     jsFuncs = None #a list of jsFunc names which will be wrapped in livepage.js
                    #and added to self
     
+    def goingLive(self, ctx, client):
+        self.client = client
+
     def beforeRender(self, ctx):
-        if self.jsFuncs is not None:
-            for func in self.jsFuncs:
-                if hasattr(self, func):
-                    raise RuntimeError, "failing to overwrite self.%s" % (func,)
-                setattr(self, func, livepage.js(func))
         inevow.IRequest(ctx).setHeader("Content-Type", 
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
-            
+#This was pretty ugly, lets drop it and use livepage.js explicitly for now
+#        if self.jsFuncs is not None:
+#            for func in self.jsFuncs:
+#                if hasattr(self, func):
+#                    raise RuntimeError, "failing to overwrite self.%s" % (func,)
+#                setattr(self, func, livepage.js(func))
+
+           
         #Do something a bit ugly...
         if self.js is not None:
             self.window.children.insert(0,
@@ -51,12 +56,21 @@ class GenericWidget(rend.Fragment):
         return loaders.stan(self.getTag()[self.children])
     
     docFactory = property(getDocFactory)
-
-    def callWithContext(self, func, *args, **kwargs):
-        """Called with the js node as context."""
-        args = [livepage.document.getElementById(self.id)] + args
-        func(*args, **kwargs)
    
+    def setAttr(self, cli, attr, value):
+        """Set attribute attr to value on this node"""
+        node = livepage.document.getElementById(self.id)
+        if isinstance(value, (int, float)):
+            s = "%s.%s = %d;"
+        else:
+            s = "%s.%s = '%s';"
+        cli.sendScript(livepage.js(s % (node, attr, value)))
+    
+    def callMethod(self, cli, method, *args):
+        """call method with args on this node."""
+        node = livepage.document.getElementById(self.id)
+        cli.sendScript("%s.%s;" % (node, livepage.callJS(method, *args)))
+    
     def addHandler(self, event, handler, *jsStrings):
         self.handlers[event] = livepage.handler(handler, *jsStrings)
    
@@ -70,7 +84,8 @@ class _(GenericWidget):
             GenericWidget.__init__(self)
         kwargs.update({'id':self.id})
         self.kwargs = kwargs
-        
+    
+    
     def getTag(self):
         self.kwargs.update(self.handlers)
         return getattr(x, self.tag)(**self.kwargs)
