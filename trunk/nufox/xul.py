@@ -1,7 +1,7 @@
 from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
 
-x = xmlstan.PrimaryNamespace('xul')
+xulns = xmlstan.PrimaryNamespace('xul')
 
 class XULPage(livepage.LivePage):
     js = None #a string of js which will be included at the start of the page.
@@ -88,7 +88,7 @@ class _(GenericWidget):
     
     def getTag(self):
         self.kwargs.update(self.handlers)
-        return getattr(x, self.tag)(**self.kwargs)
+        return getattr(xulns, self.tag)(**self.kwargs)
 
 g = globals()
 for t in ['Action', 'ArrowScrollBox', 'BBox', 'Binding', 'Bindings', 'Box', 
@@ -136,7 +136,7 @@ class Window(GenericWidget):
         
     def getTag(self):
         self.kwargs.update(self.handlers)
-        return x.window(**self.kwargs)[
+        return xulns.window(**self.kwargs)[
             T.invisible(render=T.directive('liveid')),
             T.invisible(render=T.directive('liveglue'))]
 
