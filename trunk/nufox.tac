@@ -2,7 +2,7 @@ import os
 from nevow import rend, loaders, tags as T
 
 class Examples(rend.Page):
-    
+
     docFactory = loaders.stan(
         T.html[
             T.head[T.title["NuFox Examples"]],
@@ -14,7 +14,8 @@ class Examples(rend.Page):
         ]
     )
 
-    def data_examples(self, ctx, data):
+    def __init__(self):
+        rend.Page.__init__(self)
         l = []
         for mod in os.listdir('examples'):
             if mod == '__init__.py' or not mod.endswith('py'):
@@ -24,7 +25,10 @@ class Examples(rend.Page):
             exec(imp)
             self.putChild(mod[:-3], example)
             l.append(mod[:-3])
-        return l
+        self.examples = l
+        
+    def data_examples(self, ctx, data):
+        return self.examples
 
     def render_example(self, ctx, data):
         return ctx.tag[T.a(href='#',
