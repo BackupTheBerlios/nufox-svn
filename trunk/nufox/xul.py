@@ -12,16 +12,9 @@ class XULPage(livepage.LivePage):
     def goingLive(self, ctx, client):
         self.client = client
 
-    def beforeRender(self, ctx):
+    def renderHTTP(self, ctx):
         inevow.IRequest(ctx).setHeader("Content-Type", 
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
-#This was pretty ugly, lets drop it and use livepage.js explicitly for now
-#        if self.jsFuncs is not None:
-#            for func in self.jsFuncs:
-#                if hasattr(self, func):
-#                    raise RuntimeError, "failing to overwrite self.%s" % (func,)
-#                setattr(self, func, livepage.js(func))
-
            
         #Do something a bit ugly...
         if self.js is not None:
@@ -36,6 +29,8 @@ class XULPage(livepage.LivePage):
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
             self.window])
+
+        return livepage.LivePage.renderHTTP(self, ctx)
     
     
 class GenericWidget(rend.Fragment):
@@ -71,10 +66,10 @@ class GenericWidget(rend.Fragment):
         node = livepage.document.getElementById(self.id)
         cli.sendScript("%s.%s;" % (node, livepage.callJS(method, *args)))
     
-    def addHandler(self, event, handler, *jsStrings):
-        self.handlers[event] = livepage.handler(handler, *jsStrings)
+    def addHandler(self, event, handler, *js):
+        self.handlers[event] = livepage.server.handle(handler, *js)
    
-# create evert tag class at runtime..
+# create every tag class at runtime..
 class _(GenericWidget):
     
     def __init__(self, **kwargs):
@@ -88,6 +83,7 @@ class _(GenericWidget):
     
     def getTag(self):
         self.kwargs.update(self.handlers)
+        print "HEY HANDLERS", self.handlers
         return getattr(xulns, self.tag)(**self.kwargs)
 
 g = globals()
@@ -128,12 +124,12 @@ class Window(GenericWidget):
     
     def render_liveid(self, ctx, data):
         return T.script(type="text/javascript")[
-            "var nevow_clientHandleId = '", livepage.IClientHandle(
-                ctx).handleId, "';"]
+            "var nevow_clientHandleId = '", livepage.IClientHandle(ctx).handleId, "';"]
 
     def render_liveglue(self, ctx, data):
-        return T.script(src=url.here.child('nevow_glue.js'))
-        
+        return T.script(type="text/javascript", src=url.here.child('nevow_glue.js'))
+
+
     def getTag(self):
         self.kwargs.update(self.handlers)
         return xulns.window(**self.kwargs)[
