@@ -17,8 +17,8 @@ class XULTKPage(xul.XULPage):
 
     def handle_buttonPushed(self, cli):
         self.counter += 1
-        self.label.setAttr(self.client, 'value', 
-            'You have clicked %s times' % ( self.counter,))
+        self.label.setAttr(self.client, 
+            'value', 'You have clicked %s times' % ( self.counter,))
         d = self.label.getAttr(self.client, 'value')
         d.addBoth(log)
 

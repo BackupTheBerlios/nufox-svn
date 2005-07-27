@@ -11,20 +11,24 @@ class Manhole(xul.XULPage):
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="Manhole")
         v = xul.VBox(flex=1)
-        b = xul.Button(id='sendCode', label='Send Code')
-        b.addHandler('oncommand', 'codeSent',
+        t = xul.TextBox(id='codeInput', flex=1)
+        t.addHandler('onchange', 'codeSent',
                      livepage.document.getElementById('codeInput').value)
-        t = xul.TextBox(id='codeInput')
-        self.out = xul.TextBox(id='output')
-        v.append(t)
-        v.append(b)
+
+        self.out = xul.TextBox(id='output', rows=10, flex=1, readonly='true')
+        hb = xul.HBox()
+        hb.append(xul.Label(value=">>>"))
+        hb.append(t)
+        v.append(hb)
         v.append(self.out)
         self.window.append(v)
 
     def handle_codeSent(self, arg, value):
         result = service.runInConsole(value, None, globalNS=self.ns)
-        print result
-        result = repr(result)
-        return livepage.assign(livepage.get('output').value, result)
+        d = self.out.getAttr(self.client, 'value')
+        d.addCallback(self.updateOutput, repr(result))
+    
+    def updateOutput(self, result, oldResult):
+        self.out.setAttr(self.client, 'value', oldResult + '\n' + result)
 
 example = Manhole()
