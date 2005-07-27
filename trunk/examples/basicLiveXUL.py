@@ -16,10 +16,13 @@ class XULTKPage(xul.XULPage):
         self.window.append(v)
 
     def handle_buttonPushed(self, cli):
-        print "HHHHHHHHHHHHHHHHHHHHHHHHHEY"
         self.counter += 1
-        return livepage.assign(livepage.get(str(id(self.label))).value,
-            'You have clicked %s times' % ( self.counter,))                               
+        self.label.setAttr(self.client, 'value', 
+            'You have clicked %s times' % ( self.counter,))
+        d = self.label.getAttr(self.client, 'value')
+        d.addBoth(log)
 
-        
+def log(r):
+    print "LOGGING ",r 
+
 example = XULTKPage()

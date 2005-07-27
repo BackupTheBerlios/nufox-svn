@@ -1,3 +1,4 @@
+from twisted.internet import defer
 from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
 
@@ -6,8 +7,6 @@ xulns = xmlstan.PrimaryNamespace('xul')
 class XULPage(livepage.LivePage):
     js = None #a string of js which will be included at the start of the page.
     jsIncludes = None #a list of .js files which will be included.
-    jsFuncs = None #a list of jsFunc names which will be wrapped in livepage.js
-                   #and added to self
     
     def goingLive(self, ctx, client):
         self.client = client
@@ -32,7 +31,6 @@ class XULPage(livepage.LivePage):
 
         return livepage.LivePage.renderHTTP(self, ctx)
     
-    
 class GenericWidget(rend.Fragment):
     
     def __init__(self, ID=None):
@@ -54,20 +52,28 @@ class GenericWidget(rend.Fragment):
    
     def setAttr(self, cli, attr, value):
         """Set attribute attr to value on this node"""
-        node = livepage.document.getElementById(self.id)
+        node = livepage.get(self.id)
         if isinstance(value, (int, float)):
             s = "%s.%s = %d;"
         else:
             s = "%s.%s = '%s';"
-        cli.sendScript(livepage.js(s % (node, attr, value)))
+        cli.send(livepage.assign(getattr(node, attr), value))
     
     def callMethod(self, cli, method, *args):
         """call method with args on this node."""
-        node = livepage.document.getElementById(self.id)
-        cli.sendScript("%s.%s;" % (node, livepage.callJS(method, *args)))
+        node = livepage.get(self.id)
+        livepage.IClientHandle(cli).send("%s.%s;" % (node, livepage.callJS(method, *args)))
     
     def addHandler(self, event, handler, *js):
         self.handlers[event] = livepage.server.handle(handler, *js)
+
+    def getAttr(self, cli, attr):
+        d = defer.Deferred()
+        getter = cli.transient(lambda ctx, r: d.callback(r))
+        cli.send(getter(getattr(livepage.get(self.id),attr)))
+        return d
+
+
    
 # create every tag class at runtime..
 class _(GenericWidget):
