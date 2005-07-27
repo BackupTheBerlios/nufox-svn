@@ -40,7 +40,8 @@ from nevow import appserver
 
 
 application = service.Application('xulstan')
-webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()))
+webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()), 
+    interface='127.0.0.1')
 webServer.setServiceParent(application)
 
 
