@@ -76,7 +76,7 @@ class GenericWidget(rend.Fragment):
 
    
 # create every tag class at runtime..
-class _(GenericWidget):
+class XULWidgetTemplate(GenericWidget):
     
     def __init__(self, **kwargs):
         if kwargs.has_key('id'):
@@ -110,7 +110,7 @@ for t in ['Action', 'ArrowScrollBox', 'BBox', 'Binding', 'Bindings', 'Box',
 'ToolBarSpacer', 'ToolBarSpring', 'ToolBox', 'ToolTip', 'Tree', 'TreeCell', 
 'TreeChildren', 'TreeCol', 'TreeCols', 'TreeItem', 'TreeRow', 'TreeSeparator',
 'Triple', 'VBox', 'Window', 'Wizard', 'wizardPage']:
-    g[t] = type(t, (_,), {'tag' : t.lower()})
+    g[t] = type(t, (XULWidgetTemplate,), {'tag' : t.lower()})
 
 #Override any that need special treatment
 
