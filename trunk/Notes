@@ -1,4 +1,25 @@
-* add XForm support
-* add wrappers for trees, lists, menus
-* add decent eventHandler logic to xul classes
+* add wrappers for trees, lists, menus that take python types 
+  like nested dicts/tuples or whatever. These should use nevow
+  sequences in xulstan but be wrapped in a widget.
 * port the nevow traceback page to XUL!!
+* Add form handling:
+
+    first = xul.TextBox(id='firstname')
+    last = xul.TextBox(id='lastname')
+    notes = xul.TextBox(id='notes')
+    button = xul.Button(label='submit me')
+    
+    form = xulform.FormGroup()
+    form.append(first)
+    form.append(last)
+    form.append(notes)
+    form.appendSubmitter(button)
+    form.addHandler('oncommand', myFunc)
+    
+    def myFunc(**kwargs):
+        #do stuff with the values of first, last and notes
+
+* XForm support ?
+* wrap helix/realplayer <object> stuff as an xul widget with methods for 
+  doing start/stop/pause/load etc.
+
