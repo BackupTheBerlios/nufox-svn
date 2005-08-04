@@ -1,18 +1,23 @@
+"""A stan with namespaces
+"""   
+
 from nevow.stan import Tag
 from nevow import flat
 from nevow.flat import flatstan
 
-class xmlns:
-    def __init__(self, uri):
-        self.uri = uri
-flat.registerFlattener(lambda orig, ctx: orig.uri, xmlns)
-
 class NSTag(Tag):
 
-    def __call__(self, **kw):
+    def __call__(self, *args, **kw):
+        for a in args:
+            if isinstance(a, PrimaryNamespace):
+                self.attributes['xmlns'] = a.uri
+            elif isinstance(a, TagNamespace):
+                self.attributes['xmlns:'+a.namespace] = a.uri
+                
         for k,v in kw.items():
-            if isinstance(v, xmlns):
+            if isinstance(v, TagNamespace):
                 self.attributes['xmlns:'+k] = v.uri
+                v.namespace = k
                 del kw[k]
         return Tag.__call__(self, **kw)
 
@@ -20,16 +25,13 @@ flat.registerFlattener(flatstan.TagSerializer, NSTag)
 
 class TagNamespace(object):
 
-    def __init__(self, namespace, nsKey=None, validTags=[]):
-        self._namespace = namespace
-        if nsKey:
-            self._nsKey = nsKey
-        else:
-            self._nsKey = namespace[0]
+    def __init__(self, namespace, uri, validTags=[]):
+        self.namespace = namespace
         self._validTags = validTags
+        self.uri = uri
 
     def _makeTagName(self, name):
-        return "%s:%s" % (self._nsKey, name)
+        return "%s:%s" % (self.namespace, name)
 
     def __getattribute__(self, name):
         try:
@@ -38,21 +40,21 @@ class TagNamespace(object):
             if len(self._validTags) > 0 and name not in self._validTags:
                 raise KeyError(
                     "%s is not a valid tag in the %s namespace." % (name, 
-                    self._namespace))
+                    self.namespace))
             return NSTag(self._makeTagName(name))
 
-class PrimaryNamespace(TagNamespace):
-    
+flat.registerFlattener(lambda orig, ctx: orig.uri, TagNamespace)
+
+class PrimaryNamespace(TagNamespace):    
     def _makeTagName(self, name):
         return name
 
 if __name__ == '__main__':
     from nevow.flat.ten import flatten
-    h = PrimaryNamespace('html')
-    x = TagNamespace('xforms')
+    h = PrimaryNamespace('html', "http://www.w3.org/2002/06/xhtml2")
+    x = TagNamespace('xforms', "http://www.w3.org/2002/xforms")
     
-    b = h.html(x=xmlns("http://www.w3.org/2002/xforms"), 
-               h=xmlns("http://www.w3.org/2002/06/xhtml2"))[
+    a = h.html(x, h)[
             h.head[
                 x.model(schema="foo.xsd")
             ]

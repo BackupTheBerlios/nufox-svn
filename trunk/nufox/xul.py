@@ -2,8 +2,9 @@ from twisted.internet import defer
 from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
 
-htmlns = xmlstan.TagNamespace('html')
-xulns = xmlstan.PrimaryNamespace('xul')
+htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
+xulns = xmlstan.PrimaryNamespace('xul', 
+    'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul')
 
 class XULPage(livepage.LivePage):
     js = None #a string of js which will be included at the start of the page.
@@ -122,12 +123,10 @@ class Window(GenericWidget):
             GenericWidget.__init__(self, kwargs['id'])
         else:
             GenericWidget.__init__(self)
-        kwargs.update({'id' : self.id,
-            'xmlns' : 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'})
+        kwargs.update({'id' : self.id}) 
         self.kwargs = kwargs
-       
-    #Taken form livepage..
     
+    #Taken form livepage..
     def render_liveid(self, ctx, data):
         return T.script(type="text/javascript")[
             "var nevow_clientHandleId = '", livepage.IClientHandle(ctx).handleId, "';"]
@@ -135,10 +134,9 @@ class Window(GenericWidget):
     def render_liveglue(self, ctx, data):
         return T.script(type="text/javascript", src=url.here.child('nevow_glue.js'))
 
-
     def getTag(self):
         self.kwargs.update(self.handlers)
-        return xulns.window(**self.kwargs)[
+        return xulns.window(xulns, htmlns, **self.kwargs)[
             T.invisible(render=T.directive('liveid')),
             T.invisible(render=T.directive('liveglue'))]
 
