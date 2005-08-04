@@ -2,6 +2,7 @@ from twisted.internet import defer
 from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
 
+htmlns = xmlstan.TagNamespace('html')
 xulns = xmlstan.PrimaryNamespace('xul')
 
 class XULPage(livepage.LivePage):
@@ -89,7 +90,6 @@ class XULWidgetTemplate(GenericWidget):
     
     def getTag(self):
         self.kwargs.update(self.handlers)
-        print "HEY HANDLERS", self.handlers
         return getattr(xulns, self.tag)(**self.kwargs)
 
 g = globals()
