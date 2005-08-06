@@ -3,12 +3,16 @@ from nufox import xul
 class Calculator(xul.XULPage):
 
     def __init__(self):
+        self.currentValue = 0
         self.window = xul.Window(id="xul=window", height=400, width=400,
         title="Calculator")
         v = xul.VBox(flex=1)
         for i in range(10):
             buttonId = 'button%s'%(i,)
             setattr(self, buttonId, xul.Button(id=buttonId, label=i))
+            button = getattr(self, buttonId)
+            button.number = i
+            button.addHandler('oncommand', 'numberPressed')
         self.plus = xul.Button(id='plus', label='+', flex=1)
         self.minus = xul.Button(id='minus', label='-', flex=1)
         self.times = xul.Button(id='times', label='x', flex=1)
@@ -37,6 +41,13 @@ class Calculator(xul.XULPage):
         v.append(row4)
         self.window.append(v)
 
-    def reset(self):
-        self.display.setAttr(self.client, 'value', 0)
+
+    def updateDisplay(self, value):
+        self.currentValue = value
+        self.display.setAttr(self.client, 'value', value)
+
+    def handle_numberPressed(self, cli, button):
+        print repr(self.widgets)
+        self.updateDisplay('%s%s'%(self.currentValue, button.number)) 
+         
 example = Calculator()

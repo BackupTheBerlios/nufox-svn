@@ -1,3 +1,4 @@
+import weakref
 from twisted.internet import defer
 from nevow import rend, loaders, url, inevow, livepage, tags as T
 import xmlstan
@@ -9,14 +10,28 @@ xulns = xmlstan.PrimaryNamespace('xul',
 class XULPage(livepage.LivePage):
     js = None #a string of js which will be included at the start of the page.
     jsIncludes = None #a list of .js files which will be included.
+    #we need to keep a ref to all the widgets so we can find them to pass back
+    #into handlers
+    widgets = weakref.WeakValueDictionary()
     
     def goingLive(self, ctx, client):
         self.client = client
+        self._getWidgetRefs(self.window) #get refs to all widgets
+
+    def _getWidgetRefs(self, widget):
+    
+        if hasattr(widget, 'pageCtx') and widget.pageCtx is not None:
+            widget.pageCtx = self
+            self.widgets[widget.id] = widget
+            for child in widget.children:
+                self._getWidgetRefs(child)
+        else:
+            print "ALREADY BEEN HERE!", widget
 
     def renderHTTP(self, ctx):
         inevow.IRequest(ctx).setHeader("Content-Type", 
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
-           
+        
         #Do something a bit ugly...
         if self.js is not None:
             self.window.children.insert(0,
@@ -32,19 +47,29 @@ class XULPage(livepage.LivePage):
             self.window])
 
         return livepage.LivePage.renderHTTP(self, ctx)
+
+    def locateHandler(self, ctx, path, name):
+        return lambda cli, id, *extras: getattr(
+            self, 'handle_'+name)(cli, self.widgets[id], *extras)
+    
     
 class GenericWidget(rend.Fragment):
     
     def __init__(self, ID=None):
         self.children = []
         self.handlers = {}
+        self.pageCtx = None
+
         if ID is None:
             self.id = id(self)
         else:
             self.id = ID
             
-    def append(self, w):
-        self.children.append(w)
+    def append(self, *widgets):
+        for widget in widgets:
+            self.children.append(widget)
+            if self.pageCtx is not None:
+                self.pageCtx._getWidgetRefs(widget)
         return self
 
     def getDocFactory(self):
@@ -67,7 +92,7 @@ class GenericWidget(rend.Fragment):
         livepage.IClientHandle(cli).send("%s.%s;" % (node, livepage.callJS(method, *args)))
     
     def addHandler(self, event, handler, *js):
-        self.handlers[event] = livepage.server.handle(handler, *js)
+        self.handlers[event] = livepage.server.handle(handler, self.id, *js)
 
     def getAttr(self, cli, attr):
         d = defer.Deferred()
