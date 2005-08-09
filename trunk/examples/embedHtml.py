@@ -8,7 +8,6 @@ class XULTKPage(xul.XULPage):
                                  title="Press this button!")
         v = xul.VBox(flex=2)
         b = xul.Button(id='sendCrap', label="A Button")
-        b.addHandler('oncommand', 'buttonPushed')
         v.append(b)
         v.append(xul.htmlns.img(
             src="http://trac.nunatak.com.au/trac/nufox-small.png"))

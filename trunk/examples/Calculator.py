@@ -12,7 +12,8 @@ class Calculator(xul.XULPage):
             setattr(self, buttonId, xul.Button(id=buttonId, label=i))
             button = getattr(self, buttonId)
             button.number = i
-            button.addHandler('oncommand', 'numberPressed')
+            button.addHandler('oncommand', 
+                lambda *js: self.numberPressed(button, *js))
         self.plus = xul.Button(id='plus', label='+', flex=1)
         self.minus = xul.Button(id='minus', label='-', flex=1)
         self.times = xul.Button(id='times', label='x', flex=1)
@@ -46,8 +47,7 @@ class Calculator(xul.XULPage):
         self.currentValue = value
         self.display.setAttr(self.client, 'value', value)
 
-    def handle_numberPressed(self, cli, button):
-        print repr(self.widgets)
+    def numberPressed(self, button):
         self.updateDisplay('%s%s'%(self.currentValue, button.number)) 
          
 example = Calculator()

@@ -9,13 +9,13 @@ class XULTKPage(xul.XULPage):
                                  title="Press this button!")
         v = xul.VBox(flex=1)
         b = xul.Button(label="A Button")
-        b.addHandler('oncommand', 'buttonPushed')
+        b.addHandler('oncommand', self.buttonPushed)
         self.label = xul.Label(value='hello there')
         v.append(b)
         v.append(self.label)
         self.window.append(v)
 
-    def handle_buttonPushed(self, cli, widget):
+    def buttonPushed(self):
         self.counter += 1
         self.label.setAttr(self.client, 
             'value', 'You have clicked %s times' % ( self.counter,))

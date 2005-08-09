@@ -11,7 +11,7 @@ class Manhole(xul.XULPage):
         self.window = xul.Window(height=400, width=400, title="Manhole")
         v = xul.VBox(flex=1)
         self.inbox = xul.TextBox(id='codeInput', flex=1)
-        self.inbox.addHandler('onchange', 'codeSent',
+        self.inbox.addHandler('onchange', self.codeSent,
                      livepage.get('codeInput').value)
 
         self.outbox = xul.TextBox(id='output', rows=10, flex=1, readonly='true')
@@ -22,7 +22,7 @@ class Manhole(xul.XULPage):
         v.append(self.outbox)
         self.window.append(v)
 
-    def handle_codeSent(self, arg, widget, value):
+    def codeSent(self, value):
         self.inbox.setAttr(self.client, 'value', '') #clear the input
         result = service.runInConsole(value, None, globalNS=self.ns)
         if result is not None:
