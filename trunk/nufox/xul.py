@@ -5,7 +5,8 @@ import xmlstan
 
 htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
 xulns = xmlstan.PrimaryNamespace('xul', 
-    'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul')
+    'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
+    singletons=('key',))
 
 class XULPage(livepage.LivePage):
     """I am a nevow resource that renders XUL."""
