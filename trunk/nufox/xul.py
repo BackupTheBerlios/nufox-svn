@@ -83,7 +83,7 @@ class GenericWidget(rend.Fragment):
         for widget in widgets:
             self.children.append(widget)
             if self.pageCtx is not None:
-                self.pageCtx._getWidgetRefs(widget)
+                self.pageCtx._findHandlers(widget)
         return self
 
     def getDocFactory(self):
