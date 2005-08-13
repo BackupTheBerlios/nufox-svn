@@ -16,9 +16,11 @@ class XULPage(livepage.LivePage):
     #a list of .js files which will be included.
     jsIncludes = None 
     
+    def beforeRender(self, ctx):
+        self._findHandlers(self.window) 
+    
     def goingLive(self, ctx, client):
         self.client = client
-        self._findHandlers(self.window) 
 
     def _findHandlers(self, widget):
         """Recurse through the widgets children and set self as pageCtx, also
@@ -154,21 +156,12 @@ class Window(GenericWidget):
         kwargs.update({'id' : self.id}) 
         self.kwargs = kwargs
     
-    #XXX Taken form livepage, this needs re-thinking..
-    def render_liveid(self, ctx, data):
-        return T.script(type="text/javascript")[
-            "var nevow_clientHandleId = '", 
-            livepage.IClientHandle(ctx).handleId, "';"]
-
     def render_liveglue(self, ctx, data):
-        return T.script(type="text/javascript", src=url.here.child(
-            'nevow_glue.js'))
-    # ..end XXX
+        return self.pageCtx.render_liveglue(ctx, data)
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         return xulns.window(xulns, htmlns, **self.kwargs)[
-            T.invisible(render=T.directive('liveid')),
             T.invisible(render=T.directive('liveglue'))]
 
      
