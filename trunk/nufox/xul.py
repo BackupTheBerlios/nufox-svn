@@ -1,12 +1,16 @@
-import weakref
 from twisted.internet import defer
-from nevow import rend, loaders, url, inevow, livepage, tags as T
+from twisted.python.util import sibpath
+from nevow import rend, loaders, inevow, livepage, static, tags as T
 import xmlstan
+
+#these are XUL elements that should not have an end tag, add to the 
+#list as you find more:
+singletons = ('key',)
 
 htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
 xulns = xmlstan.PrimaryNamespace('xul', 
     'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
-    singletons=('key',))
+    singletons=singletons)
 
 class XULPage(livepage.LivePage):
     """I am a nevow resource that renders XUL."""
@@ -15,7 +19,9 @@ class XULPage(livepage.LivePage):
     js = None 
     #a list of .js files which will be included.
     jsIncludes = None 
-    
+    defaultJSIncludes = ['xul.js'] 
+    addSlash = True
+
     def beforeRender(self, ctx):
         self._findHandlers(self.window) 
     
@@ -53,11 +59,16 @@ class XULPage(livepage.LivePage):
         #any other widgets so they get read first.
         if self.js is not None:
             self.window.children.insert(0,
-                T.script(type="application/x-javascript")[self.js])
+                htmlns.script(type="text/javascript")[self.js])
         if self.jsIncludes is not None:
-            [self.window.children.insert(0,
-                T.script(type="application/x-javascript", src=js)) 
-                for js in self.jsIncludes or []]
+            self.jsIncludes += self.defaultJSIncludes
+        else: 
+            self.jsIncludes = self.defaultJSIncludes 
+    
+        for js in self.jsIncludes:
+            self.window.children.insert(0, 
+                htmlns.script(type="text/javascript", src=js))
+
         #.. end magical
        
         #make sure our XUL tree is loaded and our correct doc type is set
@@ -67,15 +78,20 @@ class XULPage(livepage.LivePage):
         #return our XUL
         return livepage.LivePage.renderHTTP(self, ctx)
 
+setattr(XULPage,'child_xul.js',
+    static.File(sibpath(__file__, 'xul.js'), 'text/javascript'))
+
+
   
     
 class GenericWidget(rend.Fragment):
+    """I am the base class for all XUL elements.""" 
     
     def __init__(self, ID=None):
         self.children = []
         self.handlers = {}
         self.pageCtx = None
-
+        
         if ID is None:
             self.id = id(self)
         else:
@@ -89,8 +105,9 @@ class GenericWidget(rend.Fragment):
         return self
 
     def getDocFactory(self):
-        return loaders.stan(self.getTag()[self.children])
-    
+        if not hasattr(self, 'df'):
+            self.df = loaders.stan(self.getTag()[self.children])
+        return self.df
     docFactory = property(getDocFactory)
    
     def setAttr(self, cli, attr, value):
