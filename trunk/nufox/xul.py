@@ -46,7 +46,6 @@ class XULPage(livepage.LivePage):
 
     def locateHandler(self, ctx, path, name):
         #lookup our handler based on the returning widget id and name.
-        print "LOCATEHANDLER: ", self.handlers.keys()
         return (lambda cli, event, id, *extras: 
             self.handlers[id][event][0](*extras))
         
@@ -119,11 +118,11 @@ class GenericWidget(rend.Fragment):
             s = "%s.%s = '%s';"
         cli.send(livepage.assign(getattr(node, attr), value))
     
-    def callMethod(self, cli, method, *args):
+    def callMethod(self, method, *args):
         """call method with args on this node."""
         node = livepage.get(self.id)
-        livepage.IClientHandle(cli).send("%s.%s;" % (node, 
-            livepage.callJS(method, *args)))
+        self.pageCtx.client.send(
+            "%s.%s;" % (node, getattr(livepage.js, method)(*args)))
             
     def getAttr(self, cli, attr):
         """Get an attribute from this widget asynchronously, 
