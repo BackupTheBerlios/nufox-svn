@@ -15,11 +15,12 @@ xulns = xmlstan.PrimaryNamespace('xul',
 class XULPage(livepage.LivePage):
     """I am a nevow resource that renders XUL."""
 
-    #a string of javascript which will be included at the start of the page.
+    # a string of javascript which will be included at the start of the page.
     js = None
-    #a list of .js files which will be included.
-    jsIncludes = None
-    defaultJSIncludes = ['xul.js']
+    # a list of .js files which will be included.
+    # set to [] if no files are to be included
+    jsIncludes = ['xul.js']
+
     addSlash = True
 
     def beforeRender(self, ctx):
@@ -59,14 +60,12 @@ class XULPage(livepage.LivePage):
         if self.js is not None:
             self.window.children.insert(0,
                 htmlns.script(type="text/javascript")[self.js])
-        if self.jsIncludes is not None:
-            self.jsIncludes += self.defaultJSIncludes
-        else:
-            self.jsIncludes = self.defaultJSIncludes
+        self.js = None
 
         for js in self.jsIncludes:
             self.window.children.insert(0,
                 htmlns.script(type="text/javascript", src=js))
+        self.jsIncludes = []
         #.. end magical
 
         #make sure our XUL tree is loaded and our correct doc type is set
