@@ -13,17 +13,20 @@ class NufoxExamples(xul.XULPage):
         self.window.append(self.mainLayout)
 
         for mod in os.listdir('examples'):
-            if mod == '__init__.py' or not mod.endswith('py'):
+            if mod == '__init__.py' or not mod.endswith('.py'):
                 continue
-            example = reflect.namedAny('examples.%s.example' % mod[:-3])
-            self.putChild(mod[:-3], example)
-            button = xul.Button(label=mod[:-3])
-            button.addHandler('oncommand', lambda: self.selectExample(mod[:-3]))
+            modID = mod[:-3]
+            example = reflect.namedAny('examples.%s.example' % modID)
+            self.putChild(modID, example)
+            button = xul.Button(label=modID)
+            button.addHandler('oncommand', 
+                lambda modID=modID: self.selectExample(modID))
             self.leftPanel.append(button)
 
     def selectExample(self, example):
-        print "+++++++++++++", example
-        self.display.setAttr('src', 'http://google.com')
+        url = 'http://localhost:8080/%s' %(example,)
+        print "LOADING EXAMPLE FROM:", url, ' so there.'
+        self.display.setAttr('src', url)
 
 
 from twisted.application import internet, service
