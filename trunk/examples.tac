@@ -1,39 +1,30 @@
 import os
-from nevow import rend, loaders, tags as T
+from twisted.python import reflect
+from nufox import xul
 
-class Examples(rend.Page):
-
-    docFactory = loaders.stan(
-        T.html[
-            T.head[T.title["NuFox Examples"]],
-            T.body[
-                T.invisible(data=T.directive('examples'), render=rend.sequence)[
-                    T.div(pattern='item', render=T.directive('example'))
-                ]
-            ]
-        ]
-    )
+class NufoxExamples(xul.XULPage):
 
     def __init__(self):
-        rend.Page.__init__(self)
-        l = []
+        self.window = xul.Window(title='Nufox Examples')
+        self.mainLayout = xul.HBox()
+        self.leftPanel = xul.VBox(flex=20)
+        self.display = xul.IFrame(flex=80, src="http://trac.nunatak.com.au/projects/nufox")
+        self.mainLayout.append(self.leftPanel, self.display)
+        self.window.append(self.mainLayout)
+        
         for mod in os.listdir('examples'):
             if mod == '__init__.py' or not mod.endswith('py'):
                 continue
-            imp = "from examples.%s import example" % (mod[:-3],)
-            print "IMP", imp
-            exec(imp)
+            example = reflect.namedAny('examples.%s.example' % mod[:-3])
             self.putChild(mod[:-3], example)
-            l.append(mod[:-3])
-        self.examples = l
-        
-    def data_examples(self, ctx, data):
-        return self.examples
+            button = xul.Button(label=mod[:-3])
+            button.addHandler('oncommand', self.selectExample)
+            self.leftPanel.append(button)
 
-    def render_example(self, ctx, data):
-        return ctx.tag[T.a(href='#',
-            onclick='window.open("%s","%s","chrome,centerscreen,resizable, width=400,height=400");'%(
-                data,data))[data]]
+    def selectExample(self, example):
+        print "+++++++++++++", example
+        self.display.setAttr('src', 'http://google.com')
+        
 
 from twisted.application import internet, service
 from nevow import appserver
@@ -42,7 +33,7 @@ from nevow import appserver
 application = service.Application('xulstan')
 #webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()), 
 #    interface='127.0.0.1')
-webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()))
+webServer = internet.TCPServer(8080, appserver.NevowSite(NufoxExamples()))
 
 webServer.setServiceParent(application)
 
