@@ -107,6 +107,22 @@ class GenericWidget(object):
 
         return self
 
+    def remove(self, *widgets):
+        for widget in widgets:
+            self.children.remove(widget)
+            if self.alive:
+                snip = 'var w = document.getElementById("%s")\n' % (
+                    widget.id,)
+                snip += 'document.getElementById("%s").removeChild(w);\n' % (
+                    self.id,)
+                print snip
+                self.pageCtx.client.send(livepage.js(snip))
+
+    def getChild(self, id):
+        matches = [child for child in self.children
+            if hasattr(child, 'id') and str(child.id) == str(id)]
+        return len(matches) and matches[0] or None
+
     def rend(self, context):
         self.alive = True
         return self.getTag()[self.children]
