@@ -25,11 +25,11 @@ class XULTKPage(xul.XULPage):
         self.window.append(v)
 
     def menuSelect(self):
-        d = self.menuList.getAttr(self.client, 'value')
+        d = self.menuList.getAttr('value')
         d.addBoth(log)
-        d.addCallback(lambda r, s, c:
-                s(c, 'value', 'you chose: %s' % r),
-            self.label.setAttr, self.client)
+        d.addCallback(lambda r, s:
+                s('value', 'you chose: %s' % r),
+            self.label.setAttr)
 
 def log(r):
     print "LOGGING ",r

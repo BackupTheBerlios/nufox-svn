@@ -52,7 +52,7 @@ class Calculator(xul.XULPage):
 
     def updateDisplay(self, value):
         self.currentValue = value
-        self.display.setAttr(self.client, 'value', value)
+        self.display.setAttr('value', value)
 
     def numberPressed(self, num):
         if int(self.currentValue) == 0:

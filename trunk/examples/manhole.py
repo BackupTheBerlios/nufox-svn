@@ -23,13 +23,13 @@ class Manhole(xul.XULPage):
         self.window.append(v)
 
     def codeSent(self, value):
-        self.inbox.setAttr(self.client, 'value', '') #clear the input
+        self.inbox.setAttr('value', '') #clear the input
         result = service.runInConsole(value, None, globalNS=self.ns)
         if result is not None:
-            d = self.outbox.getAttr(self.client, 'value')
+            d = self.outbox.getAttr('value')
             d.addCallback(self.updateOutput, repr(result))
          
     def updateOutput(self, result, oldResult):
-        self.outbox.setAttr(self.client, 'value', oldResult + '\n' + result)
+        self.outbox.setAttr('value', oldResult + '\n' + result)
 
 example = Manhole()

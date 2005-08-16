@@ -49,7 +49,7 @@ class XULTKPage(xul.XULPage):
         self.window.append(v)
 
     def listSelect(self):
-        d = self.listBox.getAttr(self.client, 'value')
+        d = self.listBox.getAttr('value')
         d.addBoth(log)
 
 def log(r):

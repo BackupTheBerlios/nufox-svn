@@ -21,7 +21,7 @@ class XULTKPage(xul.XULPage):
 
     def shift_i_pressed(self):
         self.counter += 1
-        self.label.setAttr(self.client, 
-            'value', 'You have clicked %s times' % ( self.counter,))
+        self.label.setAttr('value', 
+            'You have clicked %s times' % ( self.counter,))
 
 example = XULTKPage()

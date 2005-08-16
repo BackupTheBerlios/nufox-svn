@@ -70,14 +70,14 @@ class XULTKPage(xul.XULPage):
         self.treeChildren.append(ti)
 
     def buttonPushed(self):
-        d1 = self.nameTextBox.getAttr(self.client, 'value')
-        d2 = self.ageTextBox.getAttr(self.client, 'value')
+        d1 = self.nameTextBox.getAttr('value')
+        d2 = self.ageTextBox.getAttr('value')
         dlist = gatherResults([d1, d2])
         dlist.addBoth(log)
         dlist.addCallback(self._cbButtonPushed)
 
     def treeSelect(self):
-        self.tree.getAttr(self.client, 'value').addBoth(log)
+        self.tree.getAttr('value').addBoth(log)
 
 def log(r):
     print "LOGGING ",r

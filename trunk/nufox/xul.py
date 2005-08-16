@@ -130,27 +130,27 @@ class GenericWidget(object):
 
         return snip
 
-    def setAttr(self, cli, attr, value):
+    def setAttr(self, attr, value):
         """Set attribute attr to value on this node"""
-        node = livepage.get(self.id)
-        if isinstance(value, (int, float)):
-            s = "%s.%s = %d;"
-        else:
-            s = "%s.%s = '%s';"
-        cli.send(livepage.assign(getattr(node, attr), value))
+        self.callMethod('setAttribute', attr, value)
+#        node = livepage.get(self.id)
+#        if isinstance(value, (int, float)):
+#            s = "%s.%s = %d;"
+#        else:
+#            s = "%s.%s = '%s';"
+#        self.pageCtx.client.send(livepage.assign(getattr(node, attr), value))
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
         node = livepage.get(self.id)
-        self.pageCtx.client.send(
-            "%s.%s;" % (node, getattr(livepage.js, method)(*args)))
+        self.pageCtx.client.send(getattr(node, method)(*args))
 
-    def getAttr(self, cli, attr):
+    def getAttr(self, attr):
         """Get an attribute from this widget asynchronously,
         returns a deferred."""
         d = defer.Deferred()
-        getter = cli.transient(lambda ctx, r: d.callback(r))
-        cli.send(getter(getattr(livepage.get(self.id),attr)))
+        getter = self.pageCtx.client.transient(lambda ctx, r: d.callback(r))
+        self.pageCtx.client.send(getter(getattr(livepage.get(self.id),attr)))
         return d
 
     def addHandler(self, event, handler, *js):
