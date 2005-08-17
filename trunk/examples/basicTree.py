@@ -14,7 +14,6 @@ class XULTKPage(xul.XULPage):
         self.tree.append(cols)
 
         def addChild(parent, childlabel):
-            print "ADDING", childlabel, "TO", parent
             item = xul.TreeItem(container='true', open='true')
             row = xul.TreeRow()
             row.append(xul.TreeCell(label=childlabel))
