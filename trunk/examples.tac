@@ -6,7 +6,7 @@ class NufoxExamples(xul.XULPage):
 
     def __init__(self):
         self.window = xul.Window(title='Nufox Examples')
-        self.mainLayout = xul.HBox()
+        self.mainLayout = xul.HBox(flex=1)
         self.leftPanel = xul.VBox(flex=20)
         self.display = xul.IFrame(flex=80, src="http://trac.nunatak.com.au/projects/nufox")
         self.mainLayout.append(self.leftPanel, self.display)
