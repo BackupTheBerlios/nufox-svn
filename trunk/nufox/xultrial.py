@@ -43,18 +43,16 @@ class TestRunner(xul.XULPage):
         self.currentTestClass = klass
 
     def childFactory(self, ctx, name):
-        if not hasattr(self, 'currentActiveTest') and not self.testRunning:
+        if not hasattr(self, 'currentActiveTest'):
             print "##############FIRST TIME IN"
             self.currentActiveTest = self.currentTestClass()
             self.testRunning = True
             self.runTest(self.nextTest)
             return self.currentActiveTest
-        elif self.testRunning:
+        else:
             print "###############NOT FIRST TIME IN"
             return self.currentActiveTest
-        else:
-            print "WTF"
-
+            
     def runTest(self, test):
         print "RUNNING TEST", test
         try:
