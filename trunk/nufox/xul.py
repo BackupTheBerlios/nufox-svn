@@ -23,12 +23,20 @@ class XULPage(livepage.LivePage):
 
     addSlash = True
 
+    constrainDimensions = False
+
     def beforeRender(self, ctx):
         self._findHandlers(self.window)
 
     def goingLive(self, ctx, client):
         self.client = client
-
+        if 'title' in self.window.kwargs:
+            self.window.setTitle(self.window.kwargs['title'])
+            
+        if self.constrainDimensions:
+            self.window.setDimensions(self.window.kwargs.get('height'),
+                                      self.window.kwargs.get('width'))
+                                  
     def _findHandlers(self, widget):
         """Recurse through the widgets children and set self as pageCtx, also
         take any handlers they have defined and assign them to self.handlers
@@ -212,6 +220,20 @@ class Window(GenericWidget):
 
     def render_liveglue(self, ctx, data):
         return self.pageCtx.render_liveglue(ctx, data)
+
+    def setTitle(self, title):
+        self.setAttr('title', title)
+        self.pageCtx.client.send(
+            livepage.js('document.title = \'%s\';' % title))
+
+    def setDimensions(self, width=None, height=None):
+        width = width or self.kwargs.get('width')
+        height = height or self.kwargs.get('height')
+
+        self.setAttr('height', height)
+        self.setAttr('width', width)
+        self.pageCtx.client.send(
+            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
