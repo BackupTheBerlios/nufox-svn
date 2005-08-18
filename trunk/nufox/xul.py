@@ -115,6 +115,11 @@ class GenericWidget(object):
 
         return self
 
+    def __getitem__(self, *widgets):
+        """A convinience method for building trees of widgets like you
+        would stan tags"""
+        return self.append(*widgets)
+
     def remove(self, *widgets):
         for widget in widgets:
             self.children.remove(widget)
