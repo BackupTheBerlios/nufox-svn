@@ -1,0 +1,22 @@
+What is Nufox?
+--------------
+
+Good Question :)
+
+An example:
+
+.. python::
+
+    from nufox import xul
+    
+    class MyPage(xul.XULPage):
+
+        def __init__(self):
+            self.window = xul.Window(title="nufox!", width=400, height=400)
+            self.button = xul.Button(label="Push Me")
+            self.button.addHandler('oncommand', self.pushed)
+            self.window.append(self.button)
+
+        def pushed(self):
+            print "You pushed me"
+

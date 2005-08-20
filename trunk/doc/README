@@ -1,0 +1,18 @@
+Nufox Documentation Howto:
+
+Much thanks to twisted.web2 hackers, who wrote this documentation system which
+I liberated for Nufox.
+
+To build documentation:
+
+$ cd generation-scripts/
+$ ./make.sh
+
+Documentation will be built into html/
+
+To add new documentation:
+
+1. copy or create one of the txt files in this directory and edit.
+2. edit generation-scripts/hier.py and add your doco to the structure.
+
+
