@@ -60,7 +60,7 @@ class DocViewer(xul.XULPage):
         buildButton.addHandler('oncommand', self.buildDocs)
         layout = xul.VBox(flex=1)
         if os.path.exists(util.sibpath(__file__,self.index)):
-            self.docFrame = xul.IFrame(src=index, flex=1)
+            self.docFrame = xul.IFrame(src=self.index, flex=1)
         else:
             self.docFrame = xul.IFrame(flex=1)
         layout.append(buildButton, self.docFrame)
@@ -68,10 +68,15 @@ class DocViewer(xul.XULPage):
         self.window.append(layout)
         
     def buildDocs(self):
-        d = tiutils.getProcessValue(
-            util.sibpath(__file__, 'doc/generation-scripts/make.sh'))
+        pth = util.sibpath(__file__, 'doc/generation-scripts')
+        cmd = util.sibpath(__file__, 'doc/generation-scripts/make.sh')
+        oldDir = os.getcwd()
+        os.chdir(pth)
+        d = tiutils.getProcessOutput(cmd, path=pth, env=os.environ)
+        os.chdir(oldDir)
+        d.addCallback(lambda r: log.msg(r))
+        d.addErrback(lambda r: log.err("KERBOOOOOOOOOOM! no docs %s" % (r,)))
         d.addCallback(lambda r: self.docFrame.setAttr('src', self.index))
-        d.addErrback(log.err)
 
 class NufoxExamples(xul.XULPage):
 
