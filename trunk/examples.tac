@@ -1,5 +1,5 @@
 import os
-from twisted.python import reflect, log
+from twisted.python import reflect, log, util
 from twisted.internet import utils as tiutils
 from nufox import xul
 
@@ -52,14 +52,15 @@ class Sources(rend.Page):
 
 class DocViewer(xul.XULPage):
 
-    child_docs = static.File('doc')
+    child_doc = static.File('doc')
     
     def __init__(self):
+        self.index = 'doc/html/index.html'
         buildButton = xul.Button(label="Re/Build Documentation")
         buildButton.addHandler('oncommand', self.buildDocs)
         layout = xul.VBox(flex=1)
-        if os.path.exists('doc/html/index.html'):
-            self.docFrame = xul.IFrame(flex=1, src='docs/html/index.html')
+        if os.path.exists(util.sibpath(__file__,self.index)):
+            self.docFrame = xul.IFrame(src=index, flex=1)
         else:
             self.docFrame = xul.IFrame(flex=1)
         layout.append(buildButton, self.docFrame)
@@ -67,9 +68,9 @@ class DocViewer(xul.XULPage):
         self.window.append(layout)
         
     def buildDocs(self):
-        d = tiutils.getProcessValue('doc/generation-scripts/make.sh')
-        d.addCallback(lambda r: self.docFrame.setAttr(
-            'src', 'docs/html/index.html'))
+        d = tiutils.getProcessValue(
+            util.sibpath(__file__, 'doc/generation-scripts/make.sh'))
+        d.addCallback(lambda r: self.docFrame.setAttr('src', self.index))
         d.addErrback(log.err)
 
 class NufoxExamples(xul.XULPage):
@@ -124,10 +125,8 @@ from nevow import appserver
 
 
 application = service.Application('xulstan')
-#webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()),
-#    interface='127.0.0.1')
-webServer = internet.TCPServer(8080, appserver.NevowSite(NufoxExamples()))
-
+webServer = internet.TCPServer(8080, appserver.NevowSite(Examples()),
+    interface='127.0.0.1')
 webServer.setServiceParent(application)
 
 
