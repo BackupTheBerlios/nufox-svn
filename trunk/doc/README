@@ -5,6 +5,8 @@ I liberated for Nufox.
 
 To build documentation:
 
+#Requires python docutils!
+
 $ cd generation-scripts/
 $ ./make.sh
 
