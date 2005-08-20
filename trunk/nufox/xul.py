@@ -13,16 +13,17 @@ xulns = xmlstan.PrimaryNamespace('xul',
     singletons=singletons)
 
 class XULPage(livepage.LivePage):
-    """I am a nevow resource that renders XUL."""
-
-    # a string of javascript which will be included at the start of the page.
+    """I am a nevow resource that renders XUL. You should set a xul widget to
+    self.window in your subclass' __init__ method. js and css attributes can be
+    used to add inline javascript or css to your page. 
+    jsIncludes and cssIncludes are lists of urls to javascript and css files 
+    respectivly, and if set will be included as links in the output. """
+    
     js = None
-    # a list of .js files which will be included.
-    # set to [] if no files are to be included
+    css = None
     jsIncludes = ['xul.js']
-
+    cssIncludes = []
     addSlash = True
-
     constrainDimensions = False
 
     def beforeRender(self, ctx):
@@ -63,8 +64,18 @@ class XULPage(livepage.LivePage):
         inevow.IRequest(ctx).setHeader("Content-Type",
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
 
-        #Do something a bit magical.. glue our js stuff into the window before
+        #Do something a bit magical.. glue css/js stuff into the window before
         #any other widgets so they get read first.
+        if self.css is not None:
+            self.window.children.insert(0,
+                htmlns.style(type="text/css")[self.css])
+        self.css = None
+
+        for css in self.cssIncludes:
+            self.window.children.insert(0,
+                htmlns.style(type="text/css", src=css))
+        self.cssIncludes = []
+
         if self.js is not None:
             self.window.children.insert(0,
                 htmlns.script(type="text/javascript")[self.js])

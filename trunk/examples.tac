@@ -1,5 +1,6 @@
 import os
 from twisted.python import reflect, log
+from twisted.internet import utils as tiutils
 from nufox import xul
 
 def splitNerdyCaps(s):
@@ -49,19 +50,42 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
+class DocViewer(xul.XULPage):
+
+    child_docs = static.File('doc')
+    
+    def __init__(self):
+        buildButton = xul.Button(label="Re/Build Documentation")
+        buildButton.addHandler('oncommand', self.buildDocs)
+        layout = xul.VBox(flex=1)
+        if os.path.exists('doc/html/index.html'):
+            self.docFrame = xul.IFrame(flex=1, src='docs/html/index.html')
+        else:
+            self.docFrame = xul.IFrame(flex=1)
+        layout.append(buildButton, self.docFrame)
+        self.window = xul.Window(title="Nufox Documentation")
+        self.window.append(layout)
+        
+    def buildDocs(self):
+        d = tiutils.getProcessValue('doc/generation-scripts/make.sh')
+        d.addCallback(lambda r: self.docFrame.setAttr(
+            'src', 'docs/html/index.html'))
+        d.addErrback(log.err)
+
 class NufoxExamples(xul.XULPage):
 
     child_sources = static.File('examples', defaultType='text/plain')
     child_sources.processors['.py'] = Sources
     child_sources.contentTypes = {}
     child_cssfile = static.File('examples/index.css')
+    child_docs = DocViewer()
     
     def __init__(self):
         self.window = xul.Window(title='Nufox Examples')
         self.popupset = xul.PopupSet()
         self.mainLayout = xul.HBox(flex=1)
         self.leftPanel = xul.ListBox(flex=10)
-        self.display = xul.IFrame(flex=90, src="http://trac.nunatak.com.au/projects/nufox")
+        self.display = xul.IFrame(flex=90, src="docs")
         self.mainLayout.append(self.leftPanel, self.display)
         self.window.append(self.popupset, self.mainLayout)
         
