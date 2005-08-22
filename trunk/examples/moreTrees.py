@@ -1,7 +1,7 @@
 from twisted.internet.defer import gatherResults, Deferred
 
 from nevow import livepage
-from nufox import xul
+from nufox import xul, composite
 
 class XULTKPage(xul.XULPage):
 
@@ -14,7 +14,6 @@ class XULTKPage(xul.XULPage):
         v.append(xul.Caption(label="Fun with Trees"))
 
         hbox = xul.HBox()
-
         hbox.append(xul.Label(value="Name:"))
         self.nameTextBox = xul.TextBox(value='Henry')
         hbox.append(self.nameTextBox)
@@ -29,53 +28,20 @@ class XULTKPage(xul.XULPage):
         b = xul.Button(label="Delete Selected")
         b.addHandler('oncommand', self.buttonDelete)
         hbox.append(b)
-
         v.append(hbox)
 
-        def listToTree(list):
-            t = xul.Tree(flex=1)
-
-            header = list[0]
-            list = list[1:]
-            th = xul.TreeCols()
-            for cell in header:
-                th.append(xul.TreeCol(flex=1, label=cell))
-            t.append(th)
-
-            tc = xul.TreeChildren()
-            for row in list:
-                ti = xul.TreeItem(value=row[0])
-                tr = xul.TreeRow()
-                for cell in row:
-                    tr.append(xul.TreeCell(label=str(cell)))
-                ti.append(tr)
-                tc.append(ti)
-
-            t.append(tc)
-            return (t,tc)
-
-        t,tc = listToTree([("Name", "Age"),
-            ("ned", 23),
-            ("fred", 35),
-            ("ted", 52),])
-
-        t.addHandler('onselect', self.treeSelect)
-        v.append(t)
-
-        self.tree = t
-        self.treeChildren = tc
+        self.tree = composite.SimpleTree(('Name', 'Age'),
+            lambda x: x, [("ned", 23), ("fred", 35), ("ted", 52)], flex=1)
+        self.tree.addHandler('onselect', self.treeSelect)
+        v.append(self.tree)
 
         self.window.append(v)
 
 
     def buttonAdd(self):
         def _cbButtonAdd(result):
-            ti = xul.TreeItem()
-            tr = xul.TreeRow()
-            for cell in result:
-                tr.append(xul.TreeCell(label=str(cell)))
-            ti.append(tr)
-            self.treeChildren.append(ti)
+            self.tree.items.append(result)
+            self.tree.updateClient()
 
         d1 = self.nameTextBox.getAttr('value')
         d2 = self.ageTextBox.getAttr('value')
@@ -83,29 +49,14 @@ class XULTKPage(xul.XULPage):
         dlist.addBoth(log)
         dlist.addCallback(_cbButtonAdd)
 
-    """
-    this will go in a tree composite soon
-    just brain dumping for the moment
-    """
-    def getTreeSelection(self):
-        def _cbTreeGetSelection(result):
-            """result.split('.') - WTF livepage!"""
-            result = [self.treeChildren.getChild(id) for id in result.split(',')]
-            return result
-
-        d = Deferred()
-        getter = self.client.transient(lambda ctx, r: d.callback(r))
-        self.client.send(getter(livepage.js.TreeGetSelected(self.tree.id)))
-        d.addCallback(_cbTreeGetSelection)
-        return d
-
     def treeSelect(self):
-        self.getTreeSelection().addBoth(log)
+        self.tree.getSelection().addBoth(log)
 
     def buttonDelete(self):
         def _cbButtonDelete(result):
-            self.treeChildren.remove(*result)
-        self.getTreeSelection().addCallback(_cbButtonDelete)
+            self.tree.items.remove(*result)
+            self.tree.updateClient()
+        self.tree.getSelection().addCallback(_cbButtonDelete)
 
 def log(r):
     print "LOGGING ",r

@@ -15,10 +15,10 @@ xulns = xmlstan.PrimaryNamespace('xul',
 class XULPage(livepage.LivePage):
     """I am a nevow resource that renders XUL. You should set a xul widget to
     self.window in your subclass' __init__ method. js and css attributes can be
-    used to add inline javascript or css to your page. 
-    jsIncludes and cssIncludes are lists of urls to javascript and css files 
+    used to add inline javascript or css to your page.
+    jsIncludes and cssIncludes are lists of urls to javascript and css files
     respectivly, and if set will be included as links in the output. """
-    
+
     js = None
     css = None
     jsIncludes = ['xul.js']
@@ -33,11 +33,11 @@ class XULPage(livepage.LivePage):
         self.client = client
         if 'title' in self.window.kwargs:
             self.window.setTitle(self.window.kwargs['title'])
-            
+
         if self.constrainDimensions:
             self.window.setDimensions(self.window.kwargs.get('height'),
                                       self.window.kwargs.get('width'))
-                                  
+
     def _findHandlers(self, widget):
         """Recurse through the widgets children and set self as pageCtx, also
         take any handlers they have defined and assign them to self.handlers
@@ -141,6 +141,9 @@ class GenericWidget(object):
                     self.id,)
                 print snip
                 self.pageCtx.client.send(livepage.js(snip))
+
+    def clear(self):
+        self.remove(*self.children)
 
     def getChild(self, id):
         matches = [child for child in self.children
