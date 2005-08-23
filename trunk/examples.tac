@@ -95,13 +95,14 @@ class NufoxExamples(xul.XULPage):
         self.mainLayout.append(self.leftPanel, self.display)
         self.window.append(self.popupset, self.mainLayout)
         
-        for mod in os.listdir('examples'):
+        for mod in os.listdir(util.sibpath(__file__,'examples')):
             if mod == '__init__.py' or not mod.endswith('.py'):
                 continue
             modID = mod[:-3]
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
-            example = reflect.namedAny('examples.%s.example' % modID)
+            print "Finding example 'examples.%s.example'" % (modID,) 
+            example = reflect.namedAny('examples.%s.example' % (modID,))
             self.putChild(modID, example)
             li = xul.ListItem(label=splitNerdyCaps(modID), value=modID, tooltip=ttID, 
                 context=puID)
