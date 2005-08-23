@@ -15,6 +15,9 @@ class XULTKPage(xul.XULPage):
         v.append(self.label)
         self.window.append(v)
 
+    def onLoad(self):
+        print "WHEEEEE I LOADED"
+
     def buttonPushed(self):
         self.counter += 1
         self.label.setAttr('value', 

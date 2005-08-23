@@ -20,3 +20,10 @@ An example:
         def pushed(self):
             print "You pushed me"
 
+
+.. markup::
+
+    <html>
+     <head>
+     </head>
+    </html>

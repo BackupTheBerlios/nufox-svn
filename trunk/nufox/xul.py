@@ -1,6 +1,6 @@
 from twisted.internet import defer
 from twisted.python.util import sibpath
-from nevow import rend, loaders, inevow, livepage, static, tags as T, flat
+from nevow import url, rend, loaders, inevow, livepage, static, tags as T, flat
 import xmlstan
 
 #these are XUL elements that should not have an end tag, add to the
@@ -21,10 +21,11 @@ class XULPage(livepage.LivePage):
 
     js = None
     css = None
-    jsIncludes = ['xul.js']
+    jsIncludes = []
     cssIncludes = []
     addSlash = True
     constrainDimensions = False
+    child_javascript = static.File(sibpath(__file__, 'javascript'))
 
     def beforeRender(self, ctx):
         self._findHandlers(self.window)
@@ -85,8 +86,25 @@ class XULPage(livepage.LivePage):
             self.window.children.insert(0,
                 htmlns.script(type="text/javascript", src=js))
         self.jsIncludes = []
+       
+        #We want to have javascript included in this order: 
+        #   preLiveglue.js
+        #   liveglue.js
+        #   postLiveglue.ps
+        self.window.children.insert(0, htmlns.script(
+            type="text/javascript", src=url.here.child(
+                'javascript').child('postLiveglue.js')))
+       
+        self.window.children.insert(0, T.invisible(
+            render=T.directive('liveglue')))
+
+        self.window.children.insert(0, htmlns.script(
+            type="text/javascript", src=url.here.child(
+                'javascript').child('preLiveglue.js')))
+ 
         #.. end magical
 
+        
         #make sure our XUL tree is loaded and our correct doc type is set
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
@@ -94,8 +112,7 @@ class XULPage(livepage.LivePage):
         #return our XUL
         return livepage.LivePage.renderHTTP(self, ctx)
 
-setattr(XULPage,'child_xul.js',
-    static.File(sibpath(__file__, 'xul.js'), 'text/javascript'))
+
 
 class GenericWidget(object):
     """I am the base class for all XUL elements."""
@@ -106,7 +123,7 @@ class GenericWidget(object):
         self.pageCtx = None
 
         if ID is None:
-            self.id = id(self)
+            self.id = abs(id(self))
         else:
             self.id = ID
 
@@ -118,12 +135,23 @@ class GenericWidget(object):
             if self.pageCtx is not None:
                 self.pageCtx._findHandlers(widget)
 
+        
             if self.alive:
-                snip = widget.rendPostLive()
-                snip += 'document.getElementById("%s").appendChild(%s);\n' % (
-                    self.id, widget._JSVarName())
-                self.pageCtx.client.send(livepage.js(snip))
-
+                js = [] 
+                def marshal(parent):
+                    for child in parent.children:
+                        if child.alive:
+                            continue
+                        child.alive = True
+                        js.append(livepage.js.addNode(parent.id, child.tag, 
+                                            livepage.js(repr(child.kwargs))))
+                        marshal(child)
+                marshal(self)
+                jsToSend = []
+                for j in js:
+                    jsToSend.append(j)
+                    jsToSend.append(livepage.eol)
+                self.pageCtx.client.send(jsToSend)
         return self
 
     def __getitem__(self, *widgets):
@@ -135,12 +163,8 @@ class GenericWidget(object):
         for widget in widgets:
             self.children.remove(widget)
             if self.alive:
-                snip = 'var w = document.getElementById("%s")\n' % (
-                    widget.id,)
-                snip += 'document.getElementById("%s").removeChild(w);\n' % (
-                    self.id,)
-                print snip
-                self.pageCtx.client.send(livepage.js(snip))
+                self.pageCtx.client.send(
+                    livepage.js.remove(self.id, widget.id))
 
     def clear(self):
         self.remove(*self.children)
@@ -154,34 +178,9 @@ class GenericWidget(object):
         self.alive = True
         return self.getTag()[self.children]
 
-    def _JSVarName(self):
-        return 'widget_%s' % abs(self.id)
-
-    def rendPostLive(self):
-        self.alive = True
-        w = self._JSVarName()
-
-        snip = 'var %s = document.createElement("%s");\n' % (
-            w, self.tag,)
-        for key, value in self.kwargs.items():
-            snip += '%s.setAttribute("%s", "%s");\n' % (
-                w, key, value)
-
-        for child in self.children:
-            snip += child.rendPostLive()
-            snip += '%s.appendChild(%s);\n' % (w, child._JSVarName())
-
-        return snip
-
     def setAttr(self, attr, value):
         """Set attribute attr to value on this node"""
-        self.callMethod('setAttribute', attr, value)
-#        node = livepage.get(self.id)
-#        if isinstance(value, (int, float)):
-#            s = "%s.%s = %d;"
-#        else:
-#            s = "%s.%s = '%s';"
-#        self.pageCtx.client.send(livepage.assign(getattr(node, attr), value))
+        self.pageCtx.client.send(livepage.js.setAttr(self.id, attr, value))
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
@@ -256,8 +255,7 @@ class Window(GenericWidget):
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
-        return xulns.window(xulns, htmlns, **self.kwargs)[
-            T.invisible(render=T.directive('liveglue'))]
+        return xulns.window(xulns, htmlns, **self.kwargs)
 
 ### DYNAMICALLY GENERATED WIDGETS BE HERE, DOUBLE ARGH!! ###
 

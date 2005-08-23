@@ -1,8 +1,7 @@
 /* BEGIN Core functions for nufox */
 
-var addNode = function(parentId, element, newId, attrs) {
-    w = document.createElement(element);
-    w.setAttribute('id', newId);
+var addNode = function(parentId, element, attrs) {
+    var w = document.createElement(element);
     for(key in attrs) {
         w.setAttribute(key, attrs[key]);
     }
