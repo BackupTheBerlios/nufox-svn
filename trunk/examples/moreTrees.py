@@ -30,18 +30,20 @@ class XULTKPage(xul.XULPage):
         hbox.append(b)
         v.append(hbox)
 
-        self.tree = composite.SimpleTree(('Name', 'Age'),
-            lambda x: x, [("ned", 23), ("fred", 35), ("ted", 52)], flex=1)
+        self.tree = composite.SimpleTree(('Name', 'Age'), flex=1)
         self.tree.addHandler('onselect', self.treeSelect)
+
+        self.people = composite.SequenceSubject([
+            ("ned", 23), ("fred", 35), ("ted", 52)])
+        self.people.addObserver(self.tree, lambda x: x)
+
         v.append(self.tree)
 
         self.window.append(v)
 
-
     def buttonAdd(self):
         def _cbButtonAdd(result):
-            self.tree.items.append(result)
-            self.tree.updateClient()
+            self.people.append(result)
 
         d1 = self.nameTextBox.getAttr('value')
         d2 = self.ageTextBox.getAttr('value')
@@ -54,8 +56,7 @@ class XULTKPage(xul.XULPage):
 
     def buttonDelete(self):
         def _cbButtonDelete(result):
-            self.tree.items.remove(*result)
-            self.tree.updateClient()
+            self.people.remove(*result)
         self.tree.getSelection().addCallback(_cbButtonDelete)
 
 def log(r):

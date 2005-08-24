@@ -31,6 +31,37 @@ class Player(xul.GenericWidget):
     def getTag(self):
         return xul.htmlns.embed(**self.kwargs)
 
+class SequenceSubject(object):
+    """
+    I fill the role of a subject in the observer pattern.
+    http://sern.ucalgary.ca/courses/SENG/609.04/W98/lamsh/observerLib.html
+    I specialise at sequences which allows me to be
+    a bit smarter in how I notify my observers of
+    updates.
+    """
+    def __init__(self, seq=[]):
+        self.data = seq
+        self.observers = []
+
+    def addObserver(self, ob, mapper):
+        self.observers.append((ob, mapper))
+        ob.notifySet([(item, mapper(item)) for item in self.data])
+
+    def set(self, seq):
+        self_data = seq
+        for ob, mapper in self.observers:
+            ob.notifySet([(item, mapper(item)) for item in self.data])
+
+    def append(self, *items):
+        self.data += items
+        for ob, mapper in self.observers:
+            ob.notifyAppend([(item, mapper(item)) for item in items])
+
+    def remove(self, *items):
+        for item in items:
+            self.data.remove(item)
+        for ob, mapper in self.observers:
+            ob.notifyRemove(items)
 
 class SimpleTree(xul.GenericWidget):
     """
@@ -39,17 +70,10 @@ class SimpleTree(xul.GenericWidget):
     @param headerLabels: a tuple of strings for the tree's
     column headers.
 
-    @param itemToRowLabels: a callable which takes an item
-    and returns a tuple of strings to be used for the column
-    labels for the tree row that represents that item.  the
-    length of the tuple returned should be the same as headerLabels
-
-    @param items: a list of items this tree widget will represent
-
     @param kwargs: kwargs to configure the actual xul.Tree widget
     """
 
-    def __init__(self, headerLabels, itemToRowLabels, items=[], **kwargs):
+    def __init__(self, headerLabels, **kwargs):
         t = xul.Tree(**kwargs)
         th = xul.TreeCols()
         for cell in headerLabels:
@@ -59,26 +83,38 @@ class SimpleTree(xul.GenericWidget):
         t.append(tc)
         self.tree = t
         self.treeChildren = tc
-        self.itemToRowLabels = itemToRowLabels
-        self.items = items
-        self.updateClient()
+        self.clientIDtoItem = {}
 
-    def updateClient(self):
+    def _addChild(self, rowLabels, item):
+        ti = xul.TreeItem()
+        self.clientIDtoItem[str(ti.id)] = item
+        tr = xul.TreeRow()
+        for label in rowLabels:
+            tr.append(xul.TreeCell(label=str(label)))
+        ti.append(tr)
+        self.treeChildren.append(ti)
+
+    def notifySet(self, items):
         self.treeChildren.clear()
         self.clientIDtoItem = {}
-        print self.items
-        for item in self.items:
-            rowLabels = self.itemToRowLabels(item)
-            ti = xul.TreeItem()
-            self.clientIDtoItem[str(ti.id)] = item
-            tr = xul.TreeRow()
-            for label in rowLabels:
-                tr.append(xul.TreeCell(label=str(label)))
-            ti.append(tr)
-            self.treeChildren.append(ti)
+        self.notifyAppend(items)
+
+    def notifyAppend(self, items):
+        for item, rowLabels in items:
+            self._addChild(rowLabels, item)
+
+    def notifyRemove(self, items):
+        for item in items:
+            for id, value in self.clientIDtoItem.items():
+                if item == value:
+                    child = self.treeChildren.getChild(id)
+                    self.treeChildren.remove(child)
+                    del self.clientIDtoItem[id]
+                    break
 
     def getSelection(self):
         def _cbTreeGetSelection(result):
+            if not result: return []
             return [self.clientIDtoItem[id] for id in result.split(',')]
 
         d = Deferred()
