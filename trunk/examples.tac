@@ -50,51 +50,39 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
-class DocViewer(xul.XULPage):
-
-    child_doc = static.File('doc')
-    
-    def __init__(self):
-        self.index = 'doc/html/index.html'
-        buildButton = xul.Button(label="Re/Build Documentation")
-        buildButton.addHandler('oncommand', self.buildDocs)
-        layout = xul.VBox(flex=1)
-        if os.path.exists(util.sibpath(__file__,self.index)):
-            self.docFrame = xul.IFrame(src=self.index, flex=1)
-        else:
-            self.docFrame = xul.IFrame(flex=1)
-        layout.append(buildButton, self.docFrame)
-        self.window = xul.Window(title="Nufox Documentation")
-        self.window.append(layout)
-        
-    def buildDocs(self):
-        pth = util.sibpath(__file__, 'doc/generation-scripts')
-        cmd = util.sibpath(__file__, 'doc/generation-scripts/make.sh')
-        oldDir = os.getcwd()
-        os.chdir(pth)
-        d = tiutils.getProcessOutput(cmd, path=pth, env=os.environ)
-        os.chdir(oldDir)
-        d.addCallback(lambda r: log.msg(r))
-        d.addErrback(lambda r: log.err("KERBOOOOOOOOOOM! no docs %s" % (r,)))
-        d.addCallback(lambda r: self.docFrame.setAttr('src', self.index))
-
 class NufoxExamples(xul.XULPage):
 
     child_sources = static.File('examples', defaultType='text/plain')
     child_sources.processors['.py'] = Sources
     child_sources.contentTypes = {}
     child_cssfile = static.File('examples/index.css')
-    child_docs = DocViewer()
+    child_docs = static.File(util.sibpath(__file__, 'doc/html'))
     
     def __init__(self):
         self.window = xul.Window(title='Nufox Examples')
         self.popupset = xul.PopupSet()
         self.mainLayout = xul.HBox(flex=1)
-        self.leftPanel = xul.ListBox(flex=10)
-        self.display = xul.IFrame(flex=90, src="docs")
-        self.mainLayout.append(self.leftPanel, self.display)
+        self.leftSide = xul.VBox(flex=10)
+        self.linkBox = xul.ListBox(rows=3)
+        self.exampleBox = xul.ListBox(flex=1)
+        self.leftSide.append(xul.Label(value="Nufox Links"),
+                             self.linkBox,
+                             xul.Label(value="Examples (right click)"),
+                             self.exampleBox)
+        self.display = xul.IFrame(flex=90, src="docs/introduction.html")
+        self.mainLayout.append(self.leftSide, self.display)
         self.window.append(self.popupset, self.mainLayout)
         
+        website = xul.ListItem(label="Nufox Website", 
+                               value='http://trac.nunatak.com.au/projects/nufox', 
+                            tooltip="Nufox Website")
+
+        docs = xul.ListItem(label="Documentation", 
+                            value='http://localhost:8080/docs/index.html', 
+                            tooltip="Nufox Documentation")
+        self.linkBox.append(docs, website)
+        self.linkBox.addHandler('onselect', self.linkClicked)
+
         for mod in os.listdir(util.sibpath(__file__,'examples')):
             if mod == '__init__.py' or not mod.endswith('.py'):
                 continue
@@ -104,9 +92,10 @@ class NufoxExamples(xul.XULPage):
             print "Finding example 'examples.%s.example'" % (modID,) 
             example = reflect.namedAny('examples.%s.example' % (modID,))
             self.putChild(modID, example)
-            li = xul.ListItem(label=splitNerdyCaps(modID), value=modID, tooltip=ttID, 
-                context=puID)
-            self.leftPanel.append(li)
+            li = xul.ListItem(label=splitNerdyCaps(modID), value='0', 
+                              tooltip=ttID, 
+                              context=puID)
+            self.exampleBox.append(li)
             tt = xul.ToolTip(id=ttID, orient="vertical", 
                 style="background-color: #33DD00;").append(
                     xul.Label(
@@ -125,6 +114,14 @@ class NufoxExamples(xul.XULPage):
     def selectSource(self, modID):
         url = 'http://localhost:8080/sources/%s.py' %(modID,)
         self.display.setAttr('src', url)
+
+    def linkClicked(self):
+        self.linkBox.getAttr('value').addCallbacks(self.selectLink,
+                                                   log.err)
+
+    def selectLink(self, url):
+            self.display.setAttr('src', url)
+
 
 from twisted.application import internet, service
 from nevow import appserver
