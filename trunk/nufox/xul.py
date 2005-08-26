@@ -7,6 +7,7 @@ import xmlstan
 #list as you find more:
 singletons = ('key',)
 
+#XML Namespaces
 htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
 xulns = xmlstan.PrimaryNamespace('xul',
     'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
@@ -228,13 +229,14 @@ flat.registerFlattener(lambda orig, ctx: orig.rend(ctx), GenericWidget)
 
 class Window(GenericWidget):
 
-    def __init__(self, **kwargs):
+    def __init__(self, *xmlNameSpaces, **kwargs):
         if kwargs.has_key('id'):
             GenericWidget.__init__(self, kwargs['id'])
         else:
             GenericWidget.__init__(self)
         kwargs.update({'id' : self.id})
         self.kwargs = kwargs
+        self.xmlNameSpaces = xmlNameSpaces
 
     def render_liveglue(self, ctx, data):
         return self.pageCtx.render_liveglue(ctx, data)
@@ -255,7 +257,7 @@ class Window(GenericWidget):
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
-        return xulns.window(xulns, htmlns, **self.kwargs)
+        return xulns.window(xulns, htmlns, *self.xmlNameSpaces, **self.kwargs)
 
 ### DYNAMICALLY GENERATED WIDGETS BE HERE, DOUBLE ARGH!! ###
 
