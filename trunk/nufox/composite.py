@@ -48,7 +48,7 @@ class SequenceSubject(object):
         ob.notifySet([(item, mapper(item)) for item in self.data])
 
     def set(self, seq):
-        self_data = seq
+        self.data = seq
         for ob, mapper in self.observers:
             ob.notifySet([(item, mapper(item)) for item in self.data])
 
@@ -78,6 +78,7 @@ class SimpleTree(xul.GenericWidget):
         th = xul.TreeCols()
         for cell in headerLabels:
             th.append(xul.TreeCol(flex=1, label=cell))
+            th.append(xul.Splitter(_class="tree-splitter"))
         t.append(th)
         tc = xul.TreeChildren()
         t.append(tc)
