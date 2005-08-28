@@ -23,7 +23,7 @@ class XULTKPage(xul.XULPage):
         self.pathSegments = []
 
         self.window = xul.Window(id="xul-window", height=400, width=400,
-                                 title="XUL is Cool")
+                                 title="XUL is Cool", onload="init();")
 
         v = xul.GroupBox(flex=1)
         self.box = v
@@ -36,11 +36,19 @@ class XULTKPage(xul.XULPage):
 
         h = xul.HBox(flex=1)
 
-        t = xul.Tree(flex=1, seltype="single")
+        t = xul.Tree(flex=1, id="myTree", seltype="single")
+        # , onclick="ned(this, event);")
         th = xul.TreeCols()
-        th.append(xul.TreeCol(flex=1, label="Folders", primary="true"))
+        th.append(xul.TreeCol(flex=1, label="Folders",
+            primary="true", id="folder"))
         t.append(th)
 
+        tc = xul.TreeChildren()
+        t.append(tc)
+
+        t.addHandler('loadChildren', self.borkDblClick)
+
+        """
         self.inview = NodeState(t, self.rootNode, True)
 
         self.idToNodeState = {}
@@ -65,9 +73,12 @@ class XULTKPage(xul.XULPage):
                     self.idToNodeState[str(ti.id)] = self.inview.subtree[name]
 
         t.append(tc)
+        """
+
         h.append(t)
 
-        t.addHandler('onselect', self.bork)
+        # t.addHandler('onselect', self.bork)
+        # t.addHandler('ontwist', self.leftTreeTwist)
         self.leftTree = t
 
         h.append(xul.Splitter())
@@ -108,7 +119,6 @@ class XULTKPage(xul.XULPage):
     def updateClient(self):
         self.focus.set(
             pathutils.fetch(self.rootNode, self.pathSegments).children())
-        self.openBranch()
 
     def _fetchNodeState(self):
         nodestate = self.inview
@@ -116,8 +126,9 @@ class XULTKPage(xul.XULPage):
             nodestate = nodestate.subtree[segment]
         return nodestate
 
-    def openBranch(self):
-        if len(self.pathSegments):
+    def openBranch(self, segments):
+
+        if len(segments):
 
             nodestate = self._fetchNodeState()
 
@@ -168,6 +179,29 @@ class XULTKPage(xul.XULPage):
         self.pathSegments = self.pathSegments[:-1]
         self.updateClient()
 
+    def borkDblClick(self, itemIndex):
+        print "DODODODODODODODOUTBLE!!"
+        print itemIndex
+        self.leftTree.pageCtx.client.send(
+            livepage.js._cbTreeLoadChildren(self.leftTree.id, itemIndex))
+
+    def leftTreeTwist(self):
+        def _cbBork(result):
+            print "ORAOROROR!!!"
+            nodestate = self.idToNodeState[result]
+            segments = pathutils.getSegments(nodestate.vfsnode)
+            print segments
+            print segments == self.pathSegments
+            if segments != self.pathSegments:
+                print "NENENENENEN"
+                self.openBranch(segments)
+
+        d = Deferred()
+        getter = self.leftTree.pageCtx.client.transient(lambda ctx, r: d.callback(r))
+        self.leftTree.pageCtx.client.send(getter(livepage.js.TreeGetSelected(
+            self.leftTree.id)))
+        d.addCallback(_cbleftTreeTwist)
+
     def bork(self):
         def _cbBork(result):
             print "ORAOROROR!!!"
@@ -179,7 +213,6 @@ class XULTKPage(xul.XULPage):
                 print "NENENENENEN"
                 self.pathSegments = segments
                 self.updateClient()
-
 
         d = Deferred()
         getter = self.leftTree.pageCtx.client.transient(lambda ctx, r: d.callback(r))
