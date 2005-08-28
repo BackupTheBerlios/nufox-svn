@@ -28,6 +28,8 @@ class XULPage(livepage.LivePage):
     constrainDimensions = False
     child_javascript = static.File(sibpath(__file__, 'javascript'))
 
+    glueInstalled = False
+
     def beforeRender(self, ctx):
         self._findHandlers(self.window)
 
@@ -87,25 +89,30 @@ class XULPage(livepage.LivePage):
             self.window.children.insert(0,
                 htmlns.script(type="text/javascript", src=js))
         self.jsIncludes = []
-       
-        #We want to have javascript included in this order: 
+
+        #We want to have javascript included in this order:
         #   preLiveglue.js
         #   liveglue.js
         #   postLiveglue.ps
-        self.window.children.insert(0, htmlns.script(
-            type="text/javascript", src=url.here.child(
-                'javascript').child('postLiveglue.js')))
-       
-        self.window.children.insert(0, T.invisible(
-            render=T.directive('liveglue')))
 
-        self.window.children.insert(0, htmlns.script(
-            type="text/javascript", src=url.here.child(
-                'javascript').child('preLiveglue.js')))
- 
+        if not self.glueInstalled:
+
+            self.window.children.insert(0, htmlns.script(
+                type="text/javascript", src=url.here.child(
+                    'javascript').child('postLiveglue.js')))
+
+            self.window.children.insert(0, T.invisible(
+                render=T.directive('liveglue')))
+
+            self.window.children.insert(0, htmlns.script(
+                type="text/javascript", src=url.here.child(
+                    'javascript').child('preLiveglue.js')))
+
+            self.glueInstalled = True
+
         #.. end magical
 
-        
+
         #make sure our XUL tree is loaded and our correct doc type is set
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
@@ -136,15 +143,15 @@ class GenericWidget(object):
             if self.pageCtx is not None:
                 self.pageCtx._findHandlers(widget)
 
-        
+
             if self.alive:
-                js = [] 
+                js = []
                 def marshal(parent):
                     for child in parent.children:
                         if child.alive:
                             continue
                         child.alive = True
-                        js.append(livepage.js.addNode(parent.id, child.tag, 
+                        js.append(livepage.js.addNode(parent.id, child.tag,
                                             livepage.js(repr(child.kwargs))))
                         marshal(child)
                 marshal(self)
