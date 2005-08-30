@@ -45,13 +45,21 @@ var TreeSelectionClear = function(treeid) {
     tree.view.selection.clearSelection();
 }
 
-var TreeCheckTwistForToggle = function(tree, event) {
+var NestedTreeLoadSubTree = function(tree, event, shouldBeTwist) {
     var row = {}, column = {}, part = {};
     var boxobject = tree.boxObject;
     boxobject.QueryInterface(Components.interfaces.nsITreeBoxObject);
     boxobject.getCellAt(event.clientX, event.clientY, row, column, part);
-    if (part.value=='twisty') {
+    if (((part.value=='twisty') && shouldBeTwist) ||
+            ((part.value!='twisty') && !shouldBeTwist)) {
         var item = tree.view.getItemAtIndex(row.value);
-        server.handle('dummy', 'ontwist', tree.id, item.id);
+        if(!item.loaded){
+            server.handle('dummy', 'onloadsubtree', tree.id, item.id);
+            item.loaded = true;
+        }
     }
+}
+
+function fred(tree) {
+    alert(tree.getAttribute(serveronselect));
 }

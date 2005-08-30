@@ -9,13 +9,20 @@ from twisted.internet.defer import gatherResults, Deferred
 
 from twisted.vfs import ivfs, pathutils
 
-class NodeState(object):
-    def __init__(self, xulnode, vfsnode):
-        self.xulnode = xulnode
-        self.vfsnode = vfsnode
-        self.opened = False
-        self.loaded = False
-        self.subtree = {}
+class VFSAgent(object):
+    def __init__(self, root):
+        self.root = root
+
+    def getChildren(self, segments):
+        def _getChildDirs(node):
+            return [(name, child)
+                for name, child in node.children()
+                if not name.startswith(".")
+                    and ivfs.IFileSystemContainer.providedBy(child)]
+
+        node = pathutils.fetch(self.root, segments)
+        return [(name, len(_getChildDirs(child)) and "false" or "true", [name])
+            for name, child in _getChildDirs(node)]
 
 class XULTKPage(xul.XULPage):
 
@@ -37,46 +44,12 @@ class XULTKPage(xul.XULPage):
 
         h = xul.HBox(flex=1)
 
-        t = xul.Tree(flex=1, id="myTree", seltype="single",
-            onclick="TreeCheckTwistForToggle(this, event);")
+        self.leftTree = composite.NestedTree(
+            VFSAgent(self.rootNode), ["Folders"], flex=1)
 
-        th = xul.TreeCols()
-        th.append(xul.TreeCol(flex=1, label="Folders",
-            primary="true", id="folder"))
-        t.append(th)
+        self.leftTree.addHandler("onselect", self.onLeftTreeSelect)
 
-        self.inview = NodeState(t, self.rootNode)
-        self.inview.loaded = True
-        self.inview.opened = True
-
-        self.idToNodeState = {}
-
-        tc = xul.TreeChildren()
-
-        for name, node in self.rootNode.children():
-            if not name.startswith('.'):
-                if ivfs.IFileSystemContainer.providedBy(node):
-                    ti = xul.TreeItem(container="true", open="false",
-                        empty=len([n for n, c in node.children()
-                                if not n.startswith('.') and
-                                ivfs.IFileSystemContainer.providedBy(c)])
-                            and "false" or "true")
-
-                    tr = xul.TreeRow()
-                    tr.append(xul.TreeCell(label=name))
-                    ti.append(tr)
-                    tc.append(ti)
-
-                    self.inview.subtree[name] = NodeState(ti, node)
-                    self.idToNodeState[str(ti.id)] = self.inview.subtree[name]
-
-        t.append(tc)
-
-        h.append(t)
-
-        t.addHandler('onselect', self.bork)
-        t.addHandler('ontwist', self.leftTreeTwist)
-        self.leftTree = t
+        h.append(self.leftTree)
 
         h.append(xul.Splitter())
 
@@ -93,7 +66,8 @@ class XULTKPage(xul.XULPage):
 
         self.window.append(v)
 
-        self.updateClient()
+        self.focus.set(
+            pathutils.fetch(self.rootNode, self.pathSegments).children())
 
     def _childToTreeRow(self, item):
         from datetime import datetime
@@ -116,64 +90,7 @@ class XULTKPage(xul.XULPage):
     def updateClient(self):
         self.focus.set(
             pathutils.fetch(self.rootNode, self.pathSegments).children())
-        self.selectBranch(self.pathSegments)
-
-    def _fetchNodeState(self, segments):
-        nodestate = self.inview
-        for segment in segments:
-            nodestate = nodestate.subtree[segment]
-        return nodestate
-
-    def selectBranch(self, segments):
-        if not len(segments):
-            if hasattr(self.leftTree.pageCtx, 'client'):
-                self.leftTree.pageCtx.client.send(livepage.js.TreeSelectionClear(
-                    self.leftTree.id))
-        else:
-            nodestate = self.inview
-            for segment in segments:
-                if not nodestate.opened:
-                    self.toggleNode(nodestate)
-                nodestate = nodestate.subtree[segment]
-            self.leftTree.pageCtx.client.send(livepage.js.TreeSelectionSet(
-                self.leftTree.id, nodestate.xulnode.id))
-
-    def toggleBranch(self, segments):
-        if len(segments):
-            nodestate = self._fetchNodeState(segments)
-            self.toggleNode(nodestate)
-
-    def toggleNode(self, nodestate):
-        nodestate.opened = not nodestate.opened
-        nodestate.xulnode.setAttr("open",
-            nodestate.opened and "true" or "false")
-
-        if nodestate.opened and not nodestate.loaded:
-            children = [
-                (name, node) for name, node in nodestate.vfsnode.children()
-                    if not name.startswith('.') and
-                    ivfs.IFileSystemContainer.providedBy(node)]
-
-            if len(children):
-                tc = xul.TreeChildren()
-                for name, node in children:
-                    if not name.startswith('.'):
-                        if ivfs.IFileSystemContainer.providedBy(node):
-                            ti = xul.TreeItem(container="true", open="false",
-                                empty=len([n for n, c in node.children()
-                                        if not n.startswith('.') and
-                                        ivfs.IFileSystemContainer.providedBy(c)])
-                                    and "false" or "true")
-                            tr = xul.TreeRow()
-                            tr.append(xul.TreeCell(label=name))
-                            ti.append(tr)
-                            tc.append(ti)
-
-                            nodestate.subtree[name] = NodeState(ti, node)
-                            self.idToNodeState[str(ti.id)] = nodestate.subtree[name]
-
-                nodestate.xulnode.append(tc)
-            nodestate.loaded = True
+        self.leftTree.selectBranch(self.pathSegments)
 
     def treeDblClick(self):
         def _cbTreeDblClick(result):
@@ -190,40 +107,9 @@ class XULTKPage(xul.XULPage):
         self.pathSegments = self.pathSegments[:-1]
         self.updateClient()
 
-
-    def leftTreeTwist(self, itemid):
-        print "DODODODODODODODOUTBLE!!"
-        nodestate = self.idToNodeState[itemid]
-        segments = pathutils.getSegments(nodestate.vfsnode)
-        print segments
-        self.toggleBranch(segments)
-        """
-        print segments == self.pathSegments
-        if segments != self.pathSegments:
-            print "NENENENENEN"
-            self.openBranch(segments)
-        """
-
-
-    def bork(self):
-        def _cbBork(result):
-            if result:
-                print "ORAOROROR!!!"
-                nodestate = self.idToNodeState[result]
-                segments = pathutils.getSegments(nodestate.vfsnode)
-                print segments
-                print segments == self.pathSegments
-                if segments != self.pathSegments:
-                    print "NENENENENEN"
-                    self.pathSegments = segments
-                    self.updateClient()
-
-        d = Deferred()
-        getter = self.leftTree.pageCtx.client.transient(lambda ctx, r: d.callback(r))
-        self.leftTree.pageCtx.client.send(getter(livepage.js.TreeGetSelected(
-            self.leftTree.id)))
-        d.addCallback(_cbBork)
-
+    def onLeftTreeSelect(self, segments):
+        self.pathSegments = segments
+        self.updateClient()
 
 def log(r):
     print "LOGGING ",r

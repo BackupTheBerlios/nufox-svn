@@ -63,7 +63,21 @@ class SequenceSubject(object):
         for ob, mapper in self.observers:
             ob.notifyRemove(items)
 
-class SimpleTree(xul.GenericWidget):
+
+class CompositeTreeBase(xul.GenericWidget):
+    def __getattr__(self, name):
+        """
+        delegate most of genericwidget's interface to our tree widget
+        """
+        if name in [
+            'children', 'id', 'pageCtx', 'rend', 'rendPostLive',
+            'addHandler', 'handlers', 'getTag'
+        ]:
+            return getattr(self.tree, name)
+        raise AttributeError, name
+
+
+class SimpleTree(CompositeTreeBase):
     """
     I'm a simple tree widget for a 1 tier list of items
 
@@ -125,14 +139,84 @@ class SimpleTree(xul.GenericWidget):
         d.addCallback(_cbTreeGetSelection)
         return d
 
-    def __getattr__(self, name):
-        """
-        delegate most of genericwidget's interface to our tree widget
-        """
-        if name in [
-            'children', 'id', 'pageCtx', 'rend', 'rendPostLive',
-            'addHandler', 'handlers', 'getTag'
-        ]:
-            return getattr(self.tree, name)
-        # XXX - Fix Please
-        raise AttributeError, name
+
+class NestedTree(CompositeTreeBase):
+    def __init__(self, agent, headerLabels, **kwargs):
+
+        self.agent = agent
+
+        t = xul.Tree(
+            seltype="single",
+            onclick="NestedTreeLoadSubTree(this, event, true);",
+            ondblclick="NestedTreeLoadSubTree(this, event, false);",
+            **kwargs)
+        self.tree = t
+
+        t.addHandler('onloadsubtree', self.onLoadSubTree)
+
+        th = xul.TreeCols()
+        for label in headerLabels:
+            th.append(xul.TreeCol(flex=1, label=label, primary="true"))
+        t.append(th)
+
+        t.loaded = False
+        t.segments = []
+        t.subtree = {}
+
+        self.idToNode = {}
+
+        self.loadNode(self.tree)
+
+    def addHandler(self, event, handler, *js):
+        if event == "onselect":
+            self._onSelectHandler = handler
+            js = [livepage.js.TreeGetSelected(self.tree.id)] + list(js)
+            self.tree.addHandler("onselect", self.onSelect, *js)
+
+    def _getTreeItem(self, segments):
+        node = self.tree
+        for segment in segments:
+            if not node.loaded: self.loadNode(node)
+            node = node.subtree[segment]
+        return node
+
+    def selectBranch(self, segments):
+        client = self.pageCtx.client
+        if not len(segments):
+            client.send(livepage.js.TreeSelectionClear(self.tree.id))
+        else:
+            node = self._getTreeItem(segments)
+            client.send(livepage.js.TreeSelectionSet(self.tree.id, node.id))
+
+    def loadNode(self, node):
+        if not node.loaded:
+            children = self.agent.getChildren(node.segments)
+            if len(children):
+                if node.alive: node.setAttr("open", "true")
+                tc = xul.TreeChildren()
+                for (path, empty, colLabels) in children:
+                    ti = xul.TreeItem(container="true",
+                        open="false", empty=empty)
+                    tr = xul.TreeRow()
+                    for label in colLabels:
+                        tr.append(xul.TreeCell(label=label))
+                    ti.append(tr)
+
+                    self.idToNode[str(ti.id)] = ti
+
+                    ti.loaded = False
+                    ti.segments = node.segments + [path]
+                    ti.subtree = {}
+
+                    tc.append(ti)
+
+                    node.subtree[path] = ti
+                node.append(tc)
+            node.loaded = True
+
+    def onLoadSubTree(self, itemid):
+        node = self.idToNode[itemid]
+        self.loadNode(node)
+
+    def onSelect(self, id):
+        self._onSelectHandler(self.idToNode[id].segments)
