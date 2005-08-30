@@ -59,7 +59,3 @@ var NestedTreeLoadSubTree = function(tree, event, shouldBeTwist) {
         }
     }
 }
-
-function fred(tree) {
-    alert(tree.getAttribute(serveronselect));
-}
