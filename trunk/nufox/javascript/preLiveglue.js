@@ -15,8 +15,9 @@ var remove = function(parentId, childId) {
 }
 
 var setAttr = function(id, attr, value) {
-    /* Set attribute 'attr' on node with 'id' to 'value'. */ 
-    document.getElementById(id).setAttribute(attr, value);
+    /* Set attribute 'attr' on node with 'id' to 'value'. */
+    //document.getElementById(id).setAttribute(attr, value);
+    document.getElementById(id)[attr] = value;
 }
 
 /* END Core functions for nufox */
