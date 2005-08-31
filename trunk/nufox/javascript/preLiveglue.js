@@ -15,8 +15,11 @@ var remove = function(parentId, childId) {
 }
 
 var setAttr = function(id, attr, value) {
-    /* Set attribute 'attr' on node with 'id' to 'value'. */
-    //document.getElementById(id).setAttribute(attr, value);
+    /* Set attribute 'attr' on node with 'id' to 'value'. 
+    
+    This might seem a bit odd but some xul widgets only 
+    support one or the other method of setting attrs.. */
+    document.getElementById(id).setAttribute(attr, value);
     document.getElementById(id)[attr] = value;
 }
 
