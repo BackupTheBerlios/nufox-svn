@@ -28,7 +28,7 @@ var TreeGetSelected = function(id) {
     for (var t=0; t<numRanges; t++) {
         tree.view.selection.getRangeAt(t,start,end);
         for (var v=start.value; v<=end.value; v++) {
-            ret[ret.length] = tree.view.getItemAtIndex(v).id;
+            if(v!=-1) ret[ret.length] = tree.view.getItemAtIndex(v).id;
         }
     }
     return ret;

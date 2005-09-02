@@ -99,6 +99,7 @@ class SimpleTree(CompositeTreeBase):
         self.tree = t
         self.treeChildren = tc
         self.clientIDtoItem = {}
+        self.wrappedHandlers = {}
 
     def _addChild(self, rowLabels, item):
         ti = xul.TreeItem()
@@ -126,6 +127,19 @@ class SimpleTree(CompositeTreeBase):
                     self.treeChildren.remove(child)
                     del self.clientIDtoItem[id]
                     break
+
+    def addHandler(self, event, handler, *js):
+        if event in ["ondblclick", "onselect"]:
+            self.wrappedHandlers[event] = handler
+            js = [livepage.js.TreeGetSelected(self.tree.id)] + list(js)
+            self.tree.addHandler(event,
+                lambda id, e=event, s=self, *a: s.onWrappedEvent(e, id, *a),
+                *js)
+        else:
+            self.tree.addHandler(event, handler, *js)
+
+    def onWrappedEvent(self, event, id, *args):
+        self.wrappedHandlers[event](self.clientIDtoItem[id], *args)
 
     def getSelection(self):
         def _cbTreeGetSelection(result):

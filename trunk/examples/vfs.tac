@@ -3,11 +3,18 @@ from nevow import appserver
 
 from twisted.vfs.backends import osfs
 
-from nevow import livepage
+from nevow import livepage, rend
 from nufox import xul,composite
 from twisted.internet.defer import gatherResults, Deferred
 
 from twisted.vfs import ivfs, pathutils
+
+from twisted.vfs import webhack
+import twisted.vfs.adapters.stream
+
+from datetime import datetime
+from twisted.vfs.adapters import web
+import os.path
 
 class VFSAgent(object):
     def __init__(self, root):
@@ -27,6 +34,7 @@ class VFSAgent(object):
 class XULTKPage(xul.XULPage):
 
     def __init__(self, rootNode):
+
         self.rootNode = rootNode
         self.pathSegments = []
 
@@ -53,15 +61,15 @@ class XULTKPage(xul.XULPage):
 
         h.append(xul.Splitter())
 
-        self.tree = composite.SimpleTree(
+        self.rightTree = composite.SimpleTree(
             ("Name", "Size", "Type", "Date Modified"),
                 enableColumnDrag="true", flex=3)
 
         self.focus = composite.SequenceSubject()
-        self.focus.addObserver(self.tree, self._childToTreeRow)
+        self.focus.addObserver(self.rightTree, self._childToTreeRow)
 
-        self.tree.addHandler('ondblclick', self.treeDblClick)
-        h.append(self.tree)
+        self.rightTree.addHandler('ondblclick', self.onRightTreeDblClick)
+        h.append(self.rightTree)
         v.append(h)
 
         self.window.append(v)
@@ -70,9 +78,6 @@ class XULTKPage(xul.XULPage):
             pathutils.fetch(self.rootNode, self.pathSegments).children())
 
     def _childToTreeRow(self, item):
-        from datetime import datetime
-        from twisted.vfs.adapters import web
-        import os.path
 
         name, child = item
         stat = child.getMetadata()
@@ -92,16 +97,17 @@ class XULTKPage(xul.XULPage):
             pathutils.fetch(self.rootNode, self.pathSegments).children())
         self.leftTree.selectBranch(self.pathSegments)
 
-    def treeDblClick(self):
-        def _cbTreeDblClick(result):
-            name, child = result[0]
-            if ivfs.IFileSystemContainer.providedBy(child):
-                self.pathSegments = pathutils.getAbsoluteSegments(
-                    self.pathSegments + [name])
-
-                self.updateClient()
-
-        self.tree.getSelection().addBoth(log).addCallback(_cbTreeDblClick)
+    def onRightTreeDblClick(self, result):
+        name, child = result
+        if ivfs.IFileSystemContainer.providedBy(child):
+            self.pathSegments = pathutils.getAbsoluteSegments(
+                self.pathSegments + [name])
+            self.updateClient()
+        else:
+            self.client.send(
+                livepage.js.window.open(
+                    "files/%s" % "/".join(self.pathSegments + [name]),
+                    "openfile"))
 
     def up(self):
         self.pathSegments = self.pathSegments[:-1]
@@ -110,6 +116,14 @@ class XULTKPage(xul.XULPage):
     def onLeftTreeSelect(self, segments):
         self.pathSegments = segments
         self.updateClient()
+
+    def locateChild(self, context, segments):
+        if segments[0] == "files":
+            node = pathutils.fetch(self.rootNode, list(segments[1:]))
+            p, ext = os.path.splitext(node.name)
+            return webhack.Stream(node, web.loadMimeTypes().get(
+                ext, "text/html")), ()
+        return xul.XULPage.locateChild(self, context, segments)
 
 def log(r):
     print "LOGGING ",r
