@@ -1,6 +1,6 @@
 from twisted.internet import defer
 from twisted.python.util import sibpath
-from nevow import url, rend, loaders, inevow, livepage, static, tags as T, flat
+from nevow import url, loaders, inevow, livepage, static, tags as T, flat
 import xmlstan
 
 #these are XUL elements that should not have an end tag, add to the
@@ -27,7 +27,7 @@ class XULPage(livepage.LivePage):
     addSlash = True
     constrainDimensions = False
     child_javascript = static.File(sibpath(__file__, 'javascript'))
-
+    charset = "UTF-8"
     glueInstalled = False
 
     def beforeRender(self, ctx):
@@ -66,7 +66,7 @@ class XULPage(livepage.LivePage):
     def renderHTTP(self, ctx):
         #ensure that we are delivered with the correct content type header
         inevow.IRequest(ctx).setHeader("Content-Type",
-            "application/vnd.mozilla.xul+xml; charset=UTF-8")
+            "application/vnd.mozilla.xul+xml; charset=%s" % (self.charset,))
 
         #Do something a bit magical.. glue css/js stuff into the window before
         #any other widgets so they get read first.
