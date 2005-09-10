@@ -5,3 +5,8 @@ licence: LGPL, (c) contributors
 depends: 
     twisted 2.0 
     Nevow svn head (0.4.1 wont work!)
+
+run:
+
+> twistd -noy examples.tac
+> firefox http://localhost:8080
