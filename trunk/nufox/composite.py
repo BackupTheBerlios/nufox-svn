@@ -182,9 +182,9 @@ class SimpleTree(CompositeTreeBase):
 
 
 class NestedTree(CompositeTreeBase):
-    def __init__(self, agent, headerLabels, **kwargs):
+    def __init__(self, abstraction, headerLabels, **kwargs):
 
-        self.agent = agent
+        self.abstraction = abstraction
 
         t = xul.Tree(
             seltype="single",
@@ -231,10 +231,15 @@ class NestedTree(CompositeTreeBase):
 
     def loadNode(self, node):
         if not node.loaded:
-            children = self.agent.getChildren(node.segments)
+            children = self.abstraction.getChildren(node.segments)
             if len(children):
                 if node.alive: node.setAttr("open", "true")
-                tc = xul.TreeChildren()
+
+                if hasattr(node, "treeChildrenNode"):
+                    tc = node.treeChildrenNode
+                else:
+                    tc = xul.TreeChildren()
+
                 for (path, empty, colLabels) in children:
                     ti = xul.TreeItem(container="true",
                         open="false", empty=empty)
@@ -253,11 +258,23 @@ class NestedTree(CompositeTreeBase):
 
                     node.subtree[path] = ti
                 node.append(tc)
+                node.treeChildrenNode = tc
             node.loaded = True
+
+    """XXX - this isn't right at all, still working out how to do it"""
+    def reloadNode(self, node):
+        if node.loaded:
+            node.treeChildrenNode.remove(*node.treeChildrenNode.children)
+            node.loaded = False
+            self.loadNode(node)
+
+    def reloadBranch(self, segments):
+        node = self._getTreeItem(segments)
+        self.reloadNode(node)
 
     def onLoadSubTree(self, itemid):
         node = self.idToNode[itemid]
         self.loadNode(node)
 
     def onSelect(self, id):
-        self._onSelectHandler(self.idToNode[id].segments)
+        if id: self._onSelectHandler(self.idToNode[id].segments)
