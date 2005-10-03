@@ -18,11 +18,12 @@ class XULTKPage(xul.XULPage):
     def onLoad(self):
         print "WHEEEEE I LOADED"
 
-    def buttonPushed(self):
+    def buttonPushed(self, *args):
+        print args
         self.counter += 1
-        self.label.setAttr('value', 
-            'You have clicked %s times' % ( self.counter,))
-        d = self.label.getAttr('value')
+        self.label.setAttr(u'value', 
+            u'You have clicked %s times' % ( self.counter,))
+        d = self.label.getAttr(u'value')
         d.addBoth(log)
 
 def log(r):

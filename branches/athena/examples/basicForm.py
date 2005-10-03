@@ -18,7 +18,7 @@ class FormTest(xul.XULPage):
         submit = xul.Button(label="Submit Me")
         
         # a group box to put everything in
-        gb = xul.GroupBox(flex=1).append(xul.Caption(
+        d = xul.GroupBox(flex=1).append(xul.Caption(
             value="A handy-dandy form"))
         
         #lay it all out in a nice grid:
@@ -43,7 +43,9 @@ class FormTest(xul.XULPage):
             )
         )
         #jam it all together in the window 
-        self.window.append(gb.append(grid, submit, self.display))
+        d.addCallback(lambda r: r.append(grid, submit, self.display))
+        d.addCallback(self.window.append)
+        self.window.append()
         
         #create a FieldAggregate to handle our form
         form = xulform.FieldAggregate()

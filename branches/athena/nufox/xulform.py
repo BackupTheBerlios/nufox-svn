@@ -1,5 +1,8 @@
 """Support for traditional 'forms' in XUL."""
+import md5, time
+from twisted.internet import defer
 from nevow import livepage
+from nufox import xul
 
 class FieldAggregate(object):
     """I hold a list of fields and have a submitter widget (usually a button)
@@ -36,3 +39,21 @@ class FieldAggregate(object):
         else:
             fields = [livepage.get(f.id).value for f in self.fields]
             self.submitter.addHandler(event, func, *fields)
+
+class FileUploadPopup(xul.XULPage):
+    
+    def __init__(self):
+        self.window = xul.Window(title='File Upload')
+        self.window.append(xul.Label(value='foo'))
+        self.uploads = {}
+        
+    def invoke(self, pageCtx):
+        d = defer.Deferred()
+        ID = md5.new(str(time.time()+len(self.uploads))).hexdigest()
+        self.uploads[ID] = d
+        pageCtx.putChild(ID, self)
+        pageCtx.client.send(livepage.window.open(ID))
+        return d
+
+    def beforeRender(self, ctx):
+        print 'INCOMMING!' 

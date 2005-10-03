@@ -1,6 +1,6 @@
 from twisted.internet import defer
 from twisted.python.util import sibpath
-from nevow import url, loaders, inevow, livepage, static, tags as T, flat
+from nevow import url, loaders, inevow, athena, static, tags as T, flat
 import xmlstan
 
 #these are XUL elements that should not have an end tag, add to the
@@ -13,7 +13,7 @@ xulns = xmlstan.PrimaryNamespace('xul',
     'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
     singletons=singletons)
 
-class XULPage(livepage.LivePage):
+class XULPage(athena.LivePage):
     """I am a nevow resource that renders XUL. You should set a xul widget to
     self.window in your subclass' __init__ method. js and css attributes can be
     used to add inline javascript or css to your page.
@@ -31,10 +31,10 @@ class XULPage(livepage.LivePage):
     glueInstalled = False
 
     def beforeRender(self, ctx):
-        self._findHandlers(self.window)
+        self._initWidgets(self.window)
 
-    def goingLive(self, ctx, client):
-        self.client = client
+    def goingLive(self, ctx):
+        #some hacks for in-browser apps
         if 'title' in self.window.kwargs:
             self.window.setTitle(self.window.kwargs['title'])
 
@@ -42,7 +42,7 @@ class XULPage(livepage.LivePage):
             self.window.setDimensions(self.window.kwargs.get('height'),
                                       self.window.kwargs.get('width'))
 
-    def _findHandlers(self, widget):
+    def _initWidgets(self, widget):
         """Recurse through the widgets children and set self as pageCtx, also
         take any handlers they have defined and assign them to self.handlers
         for use later in locateHandler."""
@@ -54,14 +54,15 @@ class XULPage(livepage.LivePage):
             #add all the handlers from the widget to our list of handlers
             self.handlers[str(widget.id)] = widget.handlers
             for child in widget.children:
-                self._findHandlers(child)
+                self._initWidgets(child)
         else:
             print "ALREADY BEEN HERE!", widget
 
-    def locateHandler(self, ctx, path, name):
-        #lookup our handler based on the returning widget id and name.
-        return (lambda cli, event, id, *extras:
-            self.handlers[id][event][0](*extras))
+    def locateMethod(self, ctx, methodName):
+        if methodName.startswith('__'):
+            fud, widgetID, event = methodName.split('__')
+            return lambda *args: self.handlers[widgetID][event][0](*args)
+        return athena.LivePage.locateMethod(self, ctx, methodName)
 
     def renderHTTP(self, ctx):
         #ensure that we are delivered with the correct content type header
@@ -112,13 +113,12 @@ class XULPage(livepage.LivePage):
 
         #.. end magical
 
-
         #make sure our XUL tree is loaded and our correct doc type is set
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
             self.window])
         #return our XUL
-        return livepage.LivePage.renderHTTP(self, ctx)
+        return athena.LivePage.renderHTTP(self, ctx)
 
 
 
@@ -141,26 +141,21 @@ class GenericWidget(object):
         for widget in widgets:
             self.children.append(widget)
             if self.pageCtx is not None:
-                self.pageCtx._findHandlers(widget)
-
-
+                self.pageCtx._initWidgets(widget)
             if self.alive:
-                js = []
+                newNodes = []
                 def marshal(parent):
                     for child in parent.children:
                         if child.alive:
                             continue
                         child.alive = True
-                        js.append(livepage.js.addNode(parent.id, child.tag,
-                                            livepage.js(repr(child.kwargs))))
+                        newNodes.append((parent.id, child.tag, child.args))
                         marshal(child)
                 marshal(self)
-                jsToSend = []
-                for j in js:
-                    jsToSend.append(j)
-                    jsToSend.append(livepage.eol)
-                self.pageCtx.client.send(jsToSend)
-        return self
+                d = self.pageCtx.callRemote('appendNodes', newNodes)
+                d.addCallback(lambda r: self)
+                return d
+            return defer.succeed(self)
 
     def __getitem__(self, *widgets):
         """A convinience method for building trees of widgets like you
@@ -171,8 +166,9 @@ class GenericWidget(object):
         for widget in widgets:
             self.children.remove(widget)
             if self.alive:
-                self.pageCtx.client.send(
-                    livepage.js.remove(self.id, widget.id))
+                return self.pageCtx.callRemote('removeNodes', 
+                                               [w.id for w in widgets])
+            return defer.succeed(None)
 
     def clear(self):
         self.remove(*self.children)
@@ -187,48 +183,28 @@ class GenericWidget(object):
         return self.getTag()[self.children]
 
     def setAttr(self, attr, value):
-        """Set attribute attr to value on this node"""
-        self.pageCtx.client.send(livepage.js.setAttr(self.id, attr, value))
+        return self.pageCtx.callRemote('setAttr', self.id, attr, value)
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
-        node = livepage.get(self.id)
-        self.pageCtx.client.send(getattr(node, method)(*args))
+        return self.pageCtx.callRemote('callMethod', self.id, method, args)
 
     def getAttr(self, attr):
-        """Get an attribute from this widget asynchronously,
-        returns a deferred."""
-        d = defer.Deferred()
-        getter = self.pageCtx.client.transient(lambda ctx, r: d.callback(r))
-        self.pageCtx.client.send(getter(getattr(livepage.get(self.id),attr)))
-        return d
+        """Get the value of a remote attribute."""
+        return self.pageCtx.callRemote("getAttr", self.id, attr)
 
-    def addHandler(self, event, handler, *js):
-        """I take an event like 'onclick' or 'oncommand' etc, a callable which
-        must take at least a client object as its first param, and then optional
-        javascript to be evaluated and returned, as per nevow.livepage JS.
+    def requestAttr(self, attr):
+        """You can pass me as an extra argument to addHandler to get the result
+        of this attribute lookup passed to your handler."""
+        return "a__%s__%s" % (self.id, attr)
 
-        examples:
+    def addHandler(self, event, handler, *args):
+        arguments = ""
+        if len(args) != 0:
+            arguments = ", " + "','".join(map(str,args)) + "'"
+        call = "rCall(this, '%s'%s)" % (event, arguments)
+        self.handlers[event] = (handler, call)
 
-        If the onClick event happens for button, myHandler will be called with
-        no arguments:
-
-        button.addHandler('onClick', myHandler)
-
-        If the onClick event happens for button, myHandler is called with the
-        argument 'button'; the actual widget. In this way extra arguments can
-        be passed without the need to send them down the wire.
-
-        button.addHandler('onClick', lambda *js: myHandler(button, *js))
-
-        Finally, if the onClick event happens for button, myHandler will be
-        called with the value of another widget
-
-        button.addHandler('onClick', myHandler, livepage.get(widget.id).value)
-        """
-        self.handlers[event] = (handler, livepage.server.handle(
-            handler.__name__, event, self.id, *js))
-            #send event and widget id to find handler in locateHandler
 
 flat.registerFlattener(lambda orig, ctx: orig.rend(ctx), GenericWidget)
 
@@ -250,8 +226,8 @@ class Window(GenericWidget):
 
     def setTitle(self, title):
         self.setAttr('title', title)
-        self.pageCtx.client.send(
-            livepage.js('document.title = \'%s\';' % title))
+#        self.pageCtx.client.send(
+#            livepage.js('document.title = \'%s\';' % title))
 
     def setDimensions(self, width=None, height=None):
         width = width or self.kwargs.get('width')
@@ -259,8 +235,8 @@ class Window(GenericWidget):
 
         self.setAttr('height', height)
         self.setAttr('width', width)
-        self.pageCtx.client.send(
-            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
+#       self.pageCtx.client.send(
+#            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))

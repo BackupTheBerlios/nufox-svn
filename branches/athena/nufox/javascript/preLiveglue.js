@@ -1,5 +1,22 @@
 /* BEGIN Core functions for nufox */
 
+var rCall = function(element, event) {
+    var args = [];
+    args.push("__"+element.id+"__"+event); //The event handler to call
+    for (var i = 1; i < arguments.length; i++) {
+        //Lets look for some special args like a__<id>__<attribute>
+        if(arguments[i].split('__').length > 1) {
+            var bits = arguments[i].split('__');
+            args.push(self.getElementById(bits[1]).getAttribute(bits[2]))
+        } else {
+            args.push(arguments[i]);
+        }
+    }
+    d = server.callRemote.apply(server, args);
+    d.addErrback(err);
+    return d;
+}
+
 var addNode = function(parentId, element, attrs) {
     var w = document.createElement(element);
     for(key in attrs) {
@@ -8,10 +25,22 @@ var addNode = function(parentId, element, attrs) {
     document.getElementById(parentId).appendChild(w);
 }
 
+var appendNodes = function(newNodesList) {
+    for(n in newNodesList) {
+        addNode(n[0], n[1], n[2]);
+    }
+}
+
 var remove = function(parentId, childId) {
     /* Remove node with 'childId' from node with 'parentId'. */
     document.getElementById(parentId).removeChild(
         document.getElementById(childId));
+}
+
+var removeNodes = function(parentId, nodesToRemove) {
+    for(n in nodesToRemove) {
+        remove(parentId, n); 
+    }
 }
 
 var setAttr = function(id, attr, value) {
@@ -21,8 +50,21 @@ var setAttr = function(id, attr, value) {
     support one or the other method of setting attrs.. */
     document.getElementById(id).setAttribute(attr, value);
     document.getElementById(id)[attr] = value;
+    return true;
 }
 
+var callMethod = function(id, method, args) {
+    var node = document.getElementById(id);
+    return node.getAttribute(method).apply(node, args);
+}
+
+var getAttr = function(id, attr) {
+    return document.getElementById(id).getAttribute(attr);
+}
+
+var err = function(error) {
+    alert("Error: " + error);
+}
 /* END Core functions for nufox */
 
 

@@ -1,9 +1,3 @@
-var handleDisconnect = function() {
-    /* I get called when the server drops the connection */
-    //alert("Your connection to the nufox server has been closed.");
-}
-addDisconnectListener(handleDisconnect);
-
 /* Player widget funcs */
 
 var PlayerPlay = function(id) {
