@@ -57,8 +57,8 @@ class NufoxExamples(xul.XULPage):
     child_sources.contentTypes = {}
     child_cssfile = static.File('examples/index.css')
     child_docs = static.File(util.sibpath(__file__, 'doc/html'))
-    
-    def __init__(self):
+
+    def setup(self):
         self.window = xul.Window(title='Nufox Examples')
         self.popupset = xul.PopupSet()
         self.mainLayout = xul.HBox(flex=1)
@@ -72,13 +72,13 @@ class NufoxExamples(xul.XULPage):
         self.display = xul.IFrame(flex=90, src="docs/introduction.html")
         self.mainLayout.append(self.leftSide, self.display)
         self.window.append(self.popupset, self.mainLayout)
-        
-        website = xul.ListItem(label="Nufox Website", 
-                               value='http://trac.nunatak.com.au/projects/nufox', 
+
+        website = xul.ListItem(label="Nufox Website",
+                               value='http://trac.nunatak.com.au/projects/nufox',
                             tooltip="Nufox Website")
 
-        docs = xul.ListItem(label="Documentation", 
-                            value='http://localhost:8080/docs/index.html', 
+        docs = xul.ListItem(label="Documentation",
+                            value='http://localhost:8080/docs/index.html',
                             tooltip="Nufox Documentation")
         self.linkBox.append(docs, website)
         self.linkBox.addHandler('onselect', self.linkClicked)
@@ -89,14 +89,14 @@ class NufoxExamples(xul.XULPage):
             modID = mod[:-3]
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
-            print "Finding example 'examples.%s.example'" % (modID,) 
+            print "Finding example 'examples.%s.example'" % (modID,)
             example = reflect.namedAny('examples.%s.example' % (modID,))
             self.putChild(modID, example)
-            li = xul.ListItem(label=splitNerdyCaps(modID), value='0', 
-                              tooltip=ttID, 
+            li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
+                              tooltip=ttID,
                               context=puID)
             self.exampleBox.append(li)
-            tt = xul.ToolTip(id=ttID, orient="vertical", 
+            tt = xul.ToolTip(id=ttID, orient="vertical",
                 style="background-color: #33DD00;").append(
                     xul.Label(
                         value=example.__doc__ or "No Description"))
@@ -105,8 +105,8 @@ class NufoxExamples(xul.XULPage):
             viewExample.addHandler('oncommand', self.selectExample, modID)
             viewSource.addHandler('oncommand', self.selectSource, modID)
             pu = xul.Popup(id=puID).append(viewExample, viewSource)
-            self.popupset.append(tt, pu) 
-        
+            self.popupset.append(tt, pu)
+
     def selectExample(self, example):
         url = 'http://localhost:8080/%s' %(example,)
         self.display.setAttr('src', url)
@@ -116,20 +116,46 @@ class NufoxExamples(xul.XULPage):
         self.display.setAttr('src', url)
 
     def linkClicked(self):
-        self.linkBox.getAttr('value').addCallbacks(self.selectLink,
-                                                   log.err)
+        self.linkBox.getAttr('value').addCallbacks(self.selectLink, log.err)
 
     def selectLink(self, url):
             self.display.setAttr('src', url)
 
 
+from twisted.internet import defer
+from nevow import rend, athena
+
+"""hoping this might be allowed into nevow.rend"""
+class ResourceDispatcher(rend.Page):
+    addSlash=True
+    def getRoot(self, context):
+        """override me to return the resource you want dispatched"""
+    def renderHTTP(self, context):
+        d = defer.maybeDeferred(self.getRoot, context)
+        d.addCallback(self._delegate, "renderHTTP", context)
+        return d
+    def locateChild(self, context, segments):
+        d = defer.maybeDeferred(self.getRoot, context)
+        d.addCallback(self._delegate, "locateChild", context, segments)
+        return d
+    def _delegate(self, root, funcname, *args):
+        return getattr(root, funcname)(*args)
+
+
+"""then this could go into nevow.athena"""
+class LivePageFactoryAsRootDispatcher(ResourceDispatcher):
+    def __init__(self, factory):
+        ResourceDispatcher.__init__(self)
+        self.factory = factory
+    def getRoot(self, context):
+        return self.factory.clientFactory(context)
+
+
 from twisted.application import internet, service
 from nevow import appserver
 
-
 application = service.Application('xulstan')
-webServer = internet.TCPServer(8080, appserver.NevowSite(NufoxExamples()),
-    interface='127.0.0.1')
+webServer = internet.TCPServer(8080, appserver.NevowSite(
+    LivePageFactoryAsRootDispatcher(athena.LivePageFactory(NufoxExamples))
+    ), interface='127.0.0.1')
 webServer.setServiceParent(application)
-
-

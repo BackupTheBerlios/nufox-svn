@@ -15,7 +15,7 @@ xulns = xmlstan.PrimaryNamespace('xul',
 
 class XULPage(athena.LivePage):
     """I am a nevow resource that renders XUL. You should set a xul widget to
-    self.window in your subclass' __init__ method. js and css attributes can be
+    self.window in your subclass' setup method. js and css attributes can be
     used to add inline javascript or css to your page.
     jsIncludes and cssIncludes are lists of urls to javascript and css files
     respectivly, and if set will be included as links in the output. """
@@ -61,10 +61,13 @@ class XULPage(athena.LivePage):
     def locateMethod(self, ctx, methodName):
         if methodName.startswith('__'):
             fud, widgetID, event = methodName.split('__')
-            return lambda *args: self.handlers[widgetID][event][0](*args)
+            return lambda ctx, methodName, *args: self.handlers[widgetID][event][0](*args)
         return athena.LivePage.locateMethod(self, ctx, methodName)
 
     def renderHTTP(self, ctx):
+
+        self.setup()
+
         #ensure that we are delivered with the correct content type header
         inevow.IRequest(ctx).setHeader("Content-Type",
             "application/vnd.mozilla.xul+xml; charset=%s" % (self.charset,))
@@ -155,10 +158,10 @@ class GenericWidget(object):
                 d = self.pageCtx.callRemote('appendNodes', newNodes)
                 d.addCallback(lambda r: self)
                 return d
-            return defer.succeed(self)
+        return defer.succeed(self)
 
     def __getitem__(self, *widgets):
-        """A convinience method for building trees of widgets like you
+        """A convenience method for building trees of widgets like you
         would stan tags"""
         return self.append(*widgets)
 
@@ -166,7 +169,7 @@ class GenericWidget(object):
         for widget in widgets:
             self.children.remove(widget)
             if self.alive:
-                return self.pageCtx.callRemote('removeNodes', 
+                return self.pageCtx.callRemote('removeNodes',
                                                [w.id for w in widgets])
             return defer.succeed(None)
 
@@ -183,7 +186,8 @@ class GenericWidget(object):
         return self.getTag()[self.children]
 
     def setAttr(self, attr, value):
-        return self.pageCtx.callRemote('setAttr', self.id, attr, value)
+        # XXX - thought about unicode needed
+        return self.pageCtx.callRemote('setAttr', self.id, unicode(attr), value)
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
@@ -191,7 +195,8 @@ class GenericWidget(object):
 
     def getAttr(self, attr):
         """Get the value of a remote attribute."""
-        return self.pageCtx.callRemote("getAttr", self.id, attr)
+        # XXX - thought about unicode needed
+        return self.pageCtx.callRemote("getAttr", self.id, unicode(attr))
 
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result
