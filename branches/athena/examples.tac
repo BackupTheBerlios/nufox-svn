@@ -87,7 +87,7 @@ class NufoxExamples(xul.XULPage):
             puID = 'pu_%s' % (modID,)
             print "Finding example 'examples.%s.example'" % (modID,)
             example = reflect.namedAny('examples.%s.Example' % (modID,))
-            self.putChild(modID, athena.liveLoader(example))
+            setattr(self, 'child_%s' % (modID,), athena.liveLoader(example))
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
                               tooltip=ttID,
                               context=puID)
@@ -102,7 +102,8 @@ class NufoxExamples(xul.XULPage):
             viewSource.addHandler('oncommand', self.selectSource, modID)
             pu = xul.Popup(id=puID).append(viewExample, viewSource)
             self.popupset.append(tt, pu)
-
+        print [(k,v) for k,v in self.__dict__.items() if k.startswith('child_')]
+        
     def selectExample(self, example):
         url = 'http://localhost:8080/%s' %(example,)
         self.display.setAttr('src', url)
