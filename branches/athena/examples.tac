@@ -123,7 +123,6 @@ class NufoxExamples(xul.XULPage):
 
     def childFactory(self, ctx, name):
         if name in childExamples:
-            print name
             return self.factory.getSubFactory(name,
                 childExamples[name]).clientFactory(ctx)
 
