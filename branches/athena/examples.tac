@@ -91,7 +91,6 @@ class NufoxExamples(xul.XULPage):
         for (modID, example) in childExamples.items():
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
-            print "Finding example 'examples.%s.example'" % (modID,)
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
                               tooltip=ttID,
                               context=puID)
@@ -118,13 +117,15 @@ class NufoxExamples(xul.XULPage):
     def linkClicked(self):
         self.linkBox.getAttr('value').addCallbacks(self.selectLink, log.err)
 
-    def selectLink(self, url):
-            self.display.setAttr('src', url)
+    def selectLink(self, result):
+        args, kwargs = result
+        self.display.setAttr('src', args[0])
 
     def childFactory(self, ctx, name):
         if name in childExamples:
             return self.factory.getSubFactory(name,
                 childExamples[name]).clientFactory(ctx)
+        return xul.XULPage.childFactory(self, ctx, name)
 
 
 from twisted.internet import defer
