@@ -39,14 +39,14 @@ var remove = function(parentId, childId) {
 
 var removeNodes = function(parentId, nodesToRemove) {
     for(n in nodesToRemove) {
-        remove(parentId, n); 
+        remove(parentId, n);
     }
 }
 
 var setAttr = function(id, attr, value) {
-    /* Set attribute 'attr' on node with 'id' to 'value'. 
-    
-    This might seem a bit odd but some xul widgets only 
+    /* Set attribute 'attr' on node with 'id' to 'value'.
+
+    This might seem a bit odd but some xul widgets only
     support one or the other method of setting attrs.. */
     document.getElementById(id).setAttribute(attr, value);
     document.getElementById(id)[attr] = value;
@@ -59,7 +59,9 @@ var callMethod = function(id, method, args) {
 }
 
 var getAttr = function(id, attr) {
-    return document.getElementById(id).getAttribute(attr);
+    var node = document.getElementById(id);
+    if(node[attr]==undefined) return node.getAttribute(attr);
+    return node[attr];
 }
 
 var err = function(error) {
