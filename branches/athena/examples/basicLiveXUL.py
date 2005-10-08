@@ -3,7 +3,7 @@ from nufox import xul
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.counter = 0
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="Press this button!")
@@ -15,17 +15,14 @@ class Example(xul.XULPage):
         v.append(self.label)
         self.window.append(v)
 
-    def onLoad(self):
-        print "WHEEEEE I LOADED"
-
     def buttonPushed(self, *args):
         print args
         self.counter += 1
-        self.label.setAttr(u'value', 
+        self.label.setAttr('value',
             u'You have clicked %s times' % ( self.counter,))
-        d = self.label.getAttr(u'value')
+        d = self.label.getAttr('value')
         d.addBoth(log)
 
 def log(r):
-    print "LOGGING ",r 
+    print "LOGGING ",r
 

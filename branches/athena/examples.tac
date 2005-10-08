@@ -46,6 +46,15 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
+childExamples = {}
+for mod in os.listdir(util.sibpath(__file__,'examples')):
+    if mod == '__init__.py' or not mod.endswith('.py'):
+        continue
+    modID = mod[:-3]
+    print "Finding example 'examples.%s.example'" % (modID,)
+    example = reflect.namedAny('examples.%s.Example' % (modID,))
+    childExamples[modID] = example
+
 class NufoxExamples(xul.XULPage):
 
     child_sources = static.File('examples', defaultType='text/plain')
@@ -79,15 +88,10 @@ class NufoxExamples(xul.XULPage):
         self.linkBox.append(docs, website)
         self.linkBox.addHandler('onselect', self.linkClicked)
 
-        for mod in os.listdir(util.sibpath(__file__,'examples')):
-            if mod == '__init__.py' or not mod.endswith('.py'):
-                continue
-            modID = mod[:-3]
+        for (modID, example) in childExamples.items():
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
             print "Finding example 'examples.%s.example'" % (modID,)
-            example = reflect.namedAny('examples.%s.Example' % (modID,))
-            setattr(self, 'child_%s' % (modID,), athena.liveLoader(example))
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
                               tooltip=ttID,
                               context=puID)
@@ -102,8 +106,7 @@ class NufoxExamples(xul.XULPage):
             viewSource.addHandler('oncommand', self.selectSource, modID)
             pu = xul.Popup(id=puID).append(viewExample, viewSource)
             self.popupset.append(tt, pu)
-        print [(k,v) for k,v in self.__dict__.items() if k.startswith('child_')]
-        
+
     def selectExample(self, example):
         url = 'http://localhost:8080/%s' %(example,)
         self.display.setAttr('src', url)
@@ -117,6 +120,12 @@ class NufoxExamples(xul.XULPage):
 
     def selectLink(self, url):
             self.display.setAttr('src', url)
+
+    def childFactory(self, ctx, name):
+        if name in childExamples:
+            print name
+            return self.factory.getSubFactory(name,
+                childExamples[name]).clientFactory(ctx)
 
 
 from twisted.internet import defer
