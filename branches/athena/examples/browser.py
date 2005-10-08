@@ -1,6 +1,6 @@
 from nufox import xul
 
-class test(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.window = xul.Window()
@@ -11,5 +11,3 @@ class test(xul.XULPage):
 
     def pushed(self):
         self.browser.setAttr('src', 'http://www.twistedmatrix.com')
-
-example = test()

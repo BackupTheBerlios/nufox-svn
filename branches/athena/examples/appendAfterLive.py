@@ -1,7 +1,7 @@
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
     def __init__(self):
         self.counter = 0
         self.window = xul.Window(id="xul-window", height=400, width=400,
@@ -18,5 +18,3 @@ class XULTKPage(xul.XULPage):
 
     def buttonPushed(self):
         self.box.append(xul.Label(value="Post go live label"))
-
-example = XULTKPage()

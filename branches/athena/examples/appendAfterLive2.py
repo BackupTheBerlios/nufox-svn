@@ -3,7 +3,7 @@ from twisted.internet.defer import gatherResults
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
@@ -82,5 +82,3 @@ class XULTKPage(xul.XULPage):
 def log(r):
     print "LOGGING ",r
     return r
-
-example = XULTKPage()

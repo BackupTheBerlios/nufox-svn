@@ -1,7 +1,7 @@
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.counter = 0
@@ -24,4 +24,3 @@ class XULTKPage(xul.XULPage):
         self.label.setAttr('value', 
             'You have clicked %s times' % ( self.counter,))
 
-example = XULTKPage()

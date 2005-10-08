@@ -132,33 +132,44 @@ class GenericWidget(object):
         self.children = []
         self.handlers = {}
         self.pageCtx = None
-
         if ID is None:
             self.id = abs(id(self))
         else:
             self.id = ID
-
         self.alive = False
 
     def append(self, *widgets):
+        """Use append when appending to widgets that are not live, returns
+        self, this is mostly useful in self.setup() and in methods that create
+        a sub-tree of widgets to return for appending to a live widget."""
+        if self.alive:
+            raise RuntimeError("Use liveAppend to append to a live widget.")
         for widget in widgets:
             self.children.append(widget)
             if self.pageCtx is not None:
                 self.pageCtx._initWidgets(widget)
-            if self.alive:
-                newNodes = []
-                def marshal(parent):
-                    for child in parent.children:
-                        if child.alive:
-                            continue
-                        child.alive = True
-                        newNodes.append((parent.id, child.tag, child.args))
-                        marshal(child)
-                marshal(self)
-                d = self.pageCtx.callRemote('appendNodes', newNodes)
-                d.addCallback(lambda r: self)
-                return d
-        return defer.succeed(self)
+        return self
+
+    def liveAppend(self, *widgets):
+        """Use liveAppend when appending to widgets that are already live (on
+        the client). Returns a deferred. This will also work for non-live
+        widget appends, but will still return a deferred, for a more
+        convenient append api for non-live widgets, see append."""
+        if not self.alive:
+            return defer.succeed(self.append(*widgets))
+        else:
+            newNodes = []
+            def marshal(parent):
+                for child in parent.children:
+                    if child.alive:
+                        continue
+                    child.alive = True
+                    newNodes.append((parent.id, child.tag, child.args))
+                    marshal(child)
+            marshal(self)
+            d = self.pageCtx.callRemote('appendNodes', newNodes)
+            d.addCallback(lambda r: self)
+            return d
 
     def __getitem__(self, *widgets):
         """A convenience method for building trees of widgets like you
@@ -166,6 +177,8 @@ class GenericWidget(object):
         return self.append(*widgets)
 
     def remove(self, *widgets):
+        """Remove some widgets from the client under this one. returns a 
+        deferred."""
         for widget in widgets:
             self.children.remove(widget)
             if self.alive:
@@ -174,6 +187,7 @@ class GenericWidget(object):
             return defer.succeed(None)
 
     def clear(self):
+        """Remove all widgets under this one."""
         self.remove(*self.children)
 
     def getChild(self, id):
@@ -186,8 +200,8 @@ class GenericWidget(object):
         return self.getTag()[self.children]
 
     def setAttr(self, attr, value):
-        # XXX - thought about unicode needed
-        return self.pageCtx.callRemote('setAttr', self.id, unicode(attr), value)
+        return self.pageCtx.callRemote('setAttr', self.id,
+                                       attr.decode('ascii'), value)
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
@@ -195,8 +209,7 @@ class GenericWidget(object):
 
     def getAttr(self, attr):
         """Get the value of a remote attribute."""
-        # XXX - thought about unicode needed
-        return self.pageCtx.callRemote("getAttr", self.id, unicode(attr))
+        return self.pageCtx.callRemote("getAttr", self.id, attr.decode('ascii'))
 
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result
@@ -206,7 +219,7 @@ class GenericWidget(object):
     def addHandler(self, event, handler, *args):
         arguments = ""
         if len(args) != 0:
-            arguments = ", " + "','".join(map(str,args)) + "'"
+            arguments = ", " + ",".join(map((lambda s: "'%s'" % (s,)),args))
         call = "rCall(this, '%s'%s)" % (event, arguments)
         self.handlers[event] = (handler, call)
 

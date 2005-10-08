@@ -31,11 +31,7 @@ class Sources(rend.Page):
         from twisted.python import htmlizer
         from StringIO import StringIO
         output = StringIO()
-        try:
-            htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
-        except AttributeError:
-            output = StringIO("""Starting after Nevow 0.4.1 Twisted
-2.0 is a required dependency. Please install it""")
+        htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
         return tags.xml(output.getvalue())
 
     docFactory = loaders.stan(
@@ -90,8 +86,8 @@ class NufoxExamples(xul.XULPage):
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
             print "Finding example 'examples.%s.example'" % (modID,)
-            example = reflect.namedAny('examples.%s.example' % (modID,))
-            self.putChild(modID, example)
+            example = reflect.namedAny('examples.%s.Example' % (modID,))
+            self.putChild(modID, athena.liveLoader(example))
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
                               tooltip=ttID,
                               context=puID)

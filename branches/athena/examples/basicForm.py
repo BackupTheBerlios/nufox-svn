@@ -1,6 +1,6 @@
 from nufox import xul, xulform
 
-class FormTest(xul.XULPage):
+class Example(xul.XULPage):
     """This example shows how the xulfom.FieldAggregate class can be
     used to simplify submitting multiple fields with a single submit.
     """
@@ -18,7 +18,7 @@ class FormTest(xul.XULPage):
         submit = xul.Button(label="Submit Me")
         
         # a group box to put everything in
-        d = xul.GroupBox(flex=1).append(xul.Caption(
+        gb = xul.GroupBox(flex=1).append(xul.Caption(
             value="A handy-dandy form"))
         
         #lay it all out in a nice grid:
@@ -43,10 +43,8 @@ class FormTest(xul.XULPage):
             )
         )
         #jam it all together in the window 
-        d.addCallback(lambda r: r.append(grid, submit, self.display))
-        d.addCallback(self.window.append)
-        self.window.append()
-        
+        self.window.append(gb.append(grid, submit, self.display))
+
         #create a FieldAggregate to handle our form
         form = xulform.FieldAggregate()
         form.append(firstname, surname, age)
@@ -55,5 +53,3 @@ class FormTest(xul.XULPage):
 
     def handleSubmit(self, *args):
         self.display.setAttr('value', "You submitted:\n %s" % (args,))
-
-example = FormTest()

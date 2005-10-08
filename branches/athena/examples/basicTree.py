@@ -1,7 +1,7 @@
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.counter = 0
@@ -30,5 +30,4 @@ class XULTKPage(xul.XULPage):
                 item.append(radchildren)
         self.tree.append(children)
         self.window.append(self.tree)
-example = XULTKPage()
 

@@ -1,7 +1,7 @@
 import operator
 from nufox import xul
 
-class Calculator(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.currentValue = 0
@@ -85,6 +85,3 @@ class Calculator(xul.XULPage):
         self.equasion = operator.mul 
         self.LHS = self.currentValue
         self.updateDisplay(0)
-
-
-example = Calculator()

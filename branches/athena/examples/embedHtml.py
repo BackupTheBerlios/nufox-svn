@@ -2,7 +2,7 @@ from nevow import livepage
 from nufox import xul
 from nufox.xul import htmlns as H
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
     def __init__(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
@@ -33,4 +33,3 @@ class XULTKPage(xul.XULPage):
         )
         self.window.append(v)
 
-example = XULTKPage()
