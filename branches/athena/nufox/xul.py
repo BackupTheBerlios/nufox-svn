@@ -138,17 +138,20 @@ class GenericWidget(object):
             self.id = ID
         self.alive = False
 
+    def _append(self, *widgets):
+        for widget in widgets:
+            self.children.append(widget)
+            if self.pageCtx is not None:
+                self.pageCtx._initWidgets(widget)
+        return self
+
     def append(self, *widgets):
         """Use append when appending to widgets that are not live, returns
         self, this is mostly useful in self.setup() and in methods that create
         a sub-tree of widgets to return for appending to a live widget."""
         if self.alive:
             raise RuntimeError("Use liveAppend to append to a live widget.")
-        for widget in widgets:
-            self.children.append(widget)
-            if self.pageCtx is not None:
-                self.pageCtx._initWidgets(widget)
-        return self
+        return self._append(*widgets)
 
     def liveAppend(self, *widgets):
         """Use liveAppend when appending to widgets that are already live (on
@@ -158,13 +161,15 @@ class GenericWidget(object):
         if not self.alive:
             return defer.succeed(self.append(*widgets))
         else:
+            self._append(*widgets)
             newNodes = []
             def marshal(parent):
                 for child in parent.children:
                     if child.alive:
                         continue
                     child.alive = True
-                    newNodes.append((parent.id, child.tag, child.args))
+                    newNodes.append((
+                        parent.id, child.tag.decode('ascii'), child.kwargs))
                     marshal(child)
             marshal(self)
             d = self.pageCtx.callRemote('appendNodes', newNodes)
@@ -177,7 +182,7 @@ class GenericWidget(object):
         return self.append(*widgets)
 
     def remove(self, *widgets):
-        """Remove some widgets from the client under this one. returns a 
+        """Remove some widgets from the client under this one. returns a
         deferred."""
         for widget in widgets:
             self.children.remove(widget)
@@ -209,7 +214,11 @@ class GenericWidget(object):
 
     def getAttr(self, attr):
         """Get the value of a remote attribute."""
-        return self.pageCtx.callRemote("getAttr", self.id, attr.decode('ascii'))
+        def _getAttr(result):
+            return result[0][0]
+        d = self.pageCtx.callRemote("getAttr", self.id, attr.decode('ascii'))
+        d.addCallback(_getAttr)
+        return d
 
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result

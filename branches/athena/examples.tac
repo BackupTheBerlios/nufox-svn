@@ -117,9 +117,8 @@ class NufoxExamples(xul.XULPage):
     def linkClicked(self):
         self.linkBox.getAttr('value').addCallbacks(self.selectLink, log.err)
 
-    def selectLink(self, result):
-        args, kwargs = result
-        self.display.setAttr('src', args[0])
+    def selectLink(self, url):
+        self.display.setAttr('src', url)
 
     def childFactory(self, ctx, name):
         if name in childExamples:

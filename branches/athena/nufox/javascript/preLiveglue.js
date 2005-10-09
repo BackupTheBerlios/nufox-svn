@@ -19,15 +19,16 @@ var rCall = function(element, event) {
 
 var addNode = function(parentId, element, attrs) {
     var w = document.createElement(element);
-    for(key in attrs) {
+    for(var key in attrs) {
         w.setAttribute(key, attrs[key]);
     }
     document.getElementById(parentId).appendChild(w);
 }
 
 var appendNodes = function(newNodesList) {
-    for(n in newNodesList) {
-        addNode(n[0], n[1], n[2]);
+    for(var n in newNodesList) {
+        var node = newNodesList[n];
+        addNode(node[0], node[1], node[2]);
     }
 }
 

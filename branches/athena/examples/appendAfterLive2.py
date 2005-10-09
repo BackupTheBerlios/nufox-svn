@@ -5,7 +5,7 @@ from nufox import xul
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="XUL is Cool")
         v = xul.GroupBox(flex=1)
@@ -65,9 +65,9 @@ class Example(xul.XULPage):
         ti = xul.TreeItem()
         tr = xul.TreeRow()
         for cell in result:
-            tr.append(xul.TreeCell(label=str(cell)))
+            tr.append(xul.TreeCell(label=cell))
         ti.append(tr)
-        self.treeChildren.append(ti)
+        self.treeChildren.liveAppend(ti)
 
     def buttonPushed(self):
         d1 = self.nameTextBox.getAttr('value')

@@ -3,7 +3,7 @@ from nufox import xul
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.counter = 0
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="A tree")
