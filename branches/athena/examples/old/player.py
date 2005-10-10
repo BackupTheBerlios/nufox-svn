@@ -1,10 +1,10 @@
 from nufox import xul, composite
-from nevow import static, livepage
+from nevow import static
+
 from twisted.python.util import sibpath
-livepage.DEBUG = True
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(height=400, width=400,
                                  title="RealPlayer/HelixPlayer widget")
         v = xul.VBox(flex=1)

@@ -3,7 +3,7 @@ from nufox import xul
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.currentValue = 0
         self.LHS = 0 #for keeping LHS of equasions
         self.equasion = None #what is the current equasion we're evaluating?

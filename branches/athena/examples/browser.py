@@ -2,7 +2,7 @@ from nufox import xul
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window()
         self.browser = xul.IFrame(src="http://www.google.com", flex=1)
         self.button = xul.Button(label="get twisted")
@@ -10,4 +10,4 @@ class Example(xul.XULPage):
         self.window.append(self.button, self.browser)
 
     def pushed(self):
-        self.browser.setAttr('src', 'http://www.twistedmatrix.com')
+        self.browser.setAttr('src', u'http://www.twistedmatrix.com')

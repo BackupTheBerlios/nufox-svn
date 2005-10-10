@@ -4,7 +4,7 @@ class Example(xul.XULPage):
     """This example shows how the xulfom.FieldAggregate class can be
     used to simplify submitting multiple fields with a single submit.
     """
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(title="Forms Test")
         #A place to display our form results
         self.display = xul.Label()

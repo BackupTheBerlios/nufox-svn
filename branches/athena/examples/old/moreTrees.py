@@ -5,7 +5,7 @@ from nufox import xul, composite
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="XUL is Cool")
         v = xul.GroupBox(flex=1)

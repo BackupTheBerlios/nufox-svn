@@ -3,7 +3,7 @@ from twisted.trial import assertions as A
 
 class Example(xultrial.XULTest):
 
-    def setUp(self):
+    def setup(self):
         print "RUNNING MYTEST SETUP"
         self.label = xul.Label(value="0")
         self.window.append(self.label)

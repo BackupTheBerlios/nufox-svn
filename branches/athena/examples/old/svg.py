@@ -13,7 +13,7 @@ formations = {'pyramid' : [(0,50),(70,150),(-70, 150)],
 
 class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(svg.svgns, height=400, width=400, 
                                  title="SVG Example")
         vbx = xul.VBox(flex=1)

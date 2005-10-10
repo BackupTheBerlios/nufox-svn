@@ -6,7 +6,7 @@ from nevow import livepage
 from twisted.manhole import service
 
 class Example(xul.XULPage):
-    def __init__(self):
+    def setup(self):
         self.ns = {}
         self.window = xul.Window(height=400, width=400, title="Manhole")
         v = xul.VBox(flex=1)
