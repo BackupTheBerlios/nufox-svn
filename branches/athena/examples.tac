@@ -46,16 +46,20 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
-childExamples = {}
-for mod in os.listdir(util.sibpath(__file__,'examples')):
-    if mod == '__init__.py' or not mod.endswith('.py'):
-        continue
-    modID = mod[:-3]
-    print "Finding example 'examples.%s.example'" % (modID,)
-    example = reflect.namedAny('examples.%s.Example' % (modID,))
-    childExamples[modID] = example
+def getExamples():
+    liveChildren = {}
+    for mod in os.listdir(util.sibpath(__file__,'examples')):
+        if mod == '__init__.py' or not mod.endswith('.py'):
+            continue
+        modID = mod[:-3]
+        print "Finding example 'examples.%s.example'" % (modID,)
+        example = reflect.namedAny('examples.%s.Example' % (modID,))
+        liveChildren[modID] = example
+    return liveChildren
 
 class NufoxExamples(xul.XULPage):
+    
+    liveChildren = getExamples()
 
     child_sources = static.File('examples', defaultType='text/plain')
     child_sources.processors['.py'] = Sources
@@ -88,7 +92,7 @@ class NufoxExamples(xul.XULPage):
         self.linkBox.append(docs, website)
         self.linkBox.addHandler('onselect', self.linkClicked)
 
-        for (modID, example) in childExamples.items():
+        for (modID, example) in self.liveChildren.items():
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
@@ -119,12 +123,6 @@ class NufoxExamples(xul.XULPage):
 
     def selectLink(self, url):
         self.display.setAttr('src', url)
-
-    def childFactory(self, ctx, name):
-        if name in childExamples:
-            return self.factory.getSubFactory(name,
-                childExamples[name]).clientFactory(ctx)
-        return xul.XULPage.childFactory(self, ctx, name)
 
 
 from twisted.internet import defer
@@ -161,6 +159,6 @@ from nevow import appserver
 
 application = service.Application('xulstan')
 webServer = internet.TCPServer(8080, appserver.NevowSite(
-    LivePageFactoryAsRootDispatcher(athena.LivePageFactory(NufoxExamples))
+    LivePageFactoryAsRootDispatcher(xul.XULLivePageFactory(NufoxExamples))
     ), interface='127.0.0.1')
 webServer.setServiceParent(application)

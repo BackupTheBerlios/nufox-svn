@@ -13,7 +13,39 @@ xulns = xmlstan.PrimaryNamespace('xul',
     'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
     singletons=singletons)
 
-class XULPage(athena.LivePage):
+class XULLivePageFactory(athena.LivePageFactory):
+
+    """
+    I am a LivePageFactory subclass that stores child factory isntances.
+    """
+    def __init__(self, *args, **kwargs):
+        self.childFactories = {}
+        athena.LivePageFactory.__init__(self, *args, **kwargs)
+
+    def getChildFactory(self, name, LivePageClass,
+                        FactoryClass=athena.LivePageFactory, *args, **kwargs):
+        if not name in self.childFactories:
+            self.childFactories[name] = FactoryClass(LivePageClass,
+                                                     *args, **kwargs)
+            return self.childFactories[name]
+
+class LivePageChildDispatcher(object):
+    """
+    LivePageChildDispatcher handles dispatching child requests to other
+    LivePage subclasses by persisting their LivePageFactory instances on the
+    parent factory.
+    """
+    liveChildren = {}
+
+    def childFactory(self, ctx, name):
+        if name in self.liveChildren:
+            return self.factory.getChildFactory(
+                name, self.liveChildren[name], 
+                XULLivePageFactory).clientFactory(ctx)
+        return athena.LivePage.childFactory(self, ctx, name)
+
+
+class XULPage(athena.LivePage, LivePageChildDispatcher):
     """I am a nevow resource that renders XUL. You should set a xul widget to
     self.window in your subclass' setup method. js and css attributes can be
     used to add inline javascript or css to your page.
