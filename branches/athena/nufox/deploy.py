@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from twisted.application import internet, service
 from nevow import rend, appserver
 from nufox import xul
 
