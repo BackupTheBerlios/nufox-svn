@@ -1,9 +1,9 @@
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.counter = 0
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="Press this button!")
@@ -15,17 +15,14 @@ class XULTKPage(xul.XULPage):
         v.append(self.label)
         self.window.append(v)
 
-    def onLoad(self):
-        print "WHEEEEE I LOADED"
-
-    def buttonPushed(self):
+    def buttonPushed(self, *args):
+        print args
         self.counter += 1
-        self.label.setAttr('value', 
-            'You have clicked %s times' % ( self.counter,))
+        self.label.setAttr('value',
+            u'You have clicked %s times' % ( self.counter,))
         d = self.label.getAttr('value')
         d.addBoth(log)
 
 def log(r):
-    print "LOGGING ",r 
+    print "LOGGING ",r
 
-example = XULTKPage()

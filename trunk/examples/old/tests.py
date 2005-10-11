@@ -1,9 +1,9 @@
 from nufox import xultrial, xul
 from twisted.trial import assertions as A
 
-class MyTest(xultrial.XULTest):
+class Example(xultrial.XULTest):
 
-    def setUp(self):
+    def setup(self):
         print "RUNNING MYTEST SETUP"
         self.label = xul.Label(value="0")
         self.window.append(self.label)
@@ -17,4 +17,4 @@ class MyTest(xultrial.XULTest):
         print "RUNNING TEST 2"
         self.label.setAttr('value', 'foo')
 
-example = xultrial.TestRunner([MyTest])
+#example = xultrial.TestRunner([MyTest])

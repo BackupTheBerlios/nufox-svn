@@ -1,18 +1,15 @@
-from nevow import livepage
 from nufox import xul
 from nufox.xul import htmlns as H
 
-class XULTKPage(xul.XULPage):
-
-    def __init__(self):
+class Example(xul.XULPage):
+    """This example shows how you can embed conventional HTML into XUL."""
+    def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="Press this button!")
         v = xul.VBox(flex=2)
-        b = xul.Button(id='sendCrap', label="A Button")
-        v.append(b)
-        v.append(H.h1["This is an H1 tag"])
+        v.append(H.h1["This is an H1 tag, embedded in XUL."])
         v.append(
-            H.table(border=1)[
+            H.table(border=1, width='50%')[
                 H.colgroup[
                     H.col(width='50%'),
                     H.col(width='50%')
@@ -33,4 +30,3 @@ class XULTKPage(xul.XULPage):
         )
         self.window.append(v)
 
-example = XULTKPage()

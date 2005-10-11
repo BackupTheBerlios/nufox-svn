@@ -1,7 +1,7 @@
 from nevow import rend, loaders, inevow, tags as T
 from nufox import xmlstan
 
-class XULStanPage(rend.Page):
+class Example(rend.Page):
     """I use xmlstan directly in a nevowish way to render some XUL."""
     
     X = xmlstan.PrimaryNamespace('xul',
@@ -20,5 +20,3 @@ class XULStanPage(rend.Page):
     def beforeRender(self, ctx):
         inevow.IRequest(ctx).setHeader("Content-Type", 
             "application/vnd.mozilla.xul+xml; charset=UTF-8")
-
-example = XULStanPage()

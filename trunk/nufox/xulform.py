@@ -1,5 +1,8 @@
 """Support for traditional 'forms' in XUL."""
+import md5, time
+from twisted.internet import defer
 from nevow import livepage
+from nufox import xul
 
 class FieldAggregate(object):
     """I hold a list of fields and have a submitter widget (usually a button)
@@ -34,5 +37,5 @@ class FieldAggregate(object):
         if not self.submitter:
             raise RuntimeError, "Cannot call addHandler before setSubmitter"
         else:
-            fields = [livepage.get(f.id).value for f in self.fields]
+            fields = [f.requestAttr('value') for f in self.fields]
             self.submitter.addHandler(event, func, *fields)

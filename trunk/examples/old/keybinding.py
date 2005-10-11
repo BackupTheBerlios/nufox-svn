@@ -1,9 +1,9 @@
 from nevow import livepage
 from nufox import xul
 
-class XULTKPage(xul.XULPage):
+class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.counter = 0
         self.window = xul.Window(height=400, width=400, title="keybindings")
         v = xul.VBox(flex=1)
@@ -24,4 +24,3 @@ class XULTKPage(xul.XULPage):
         self.label.setAttr('value', 
             'You have clicked %s times' % ( self.counter,))
 
-example = XULTKPage()

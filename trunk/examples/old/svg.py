@@ -11,9 +11,9 @@ formations = {'pyramid' : [(0,50),(70,150),(-70, 150)],
               'hline' : [(150,0),(150,150),(150, 300)],
              }
 
-class SVGExample(xul.XULPage):
+class Example(xul.XULPage):
 
-    def __init__(self):
+    def setup(self):
         self.window = xul.Window(svg.svgns, height=400, width=400, 
                                  title="SVG Example")
         vbx = xul.VBox(flex=1)
@@ -53,6 +53,3 @@ class SVGExample(xul.XULPage):
         self.c1.setAttr('transform',"translate%s" % (formation[0],))
         self.c2.setAttr('transform',"translate%s" % (formation[1],))
         self.c3.setAttr('transform',"translate%s" % (formation[2],))
-
-
-example = SVGExample()

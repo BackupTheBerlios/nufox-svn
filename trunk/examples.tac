@@ -1,7 +1,7 @@
 import os
 from twisted.python import reflect, log, util
 from twisted.internet import utils as tiutils
-from nufox import xul
+from nufox import xul, deploy
 
 def splitNerdyCaps(s):
     wordBuffer = []
@@ -31,11 +31,7 @@ class Sources(rend.Page):
         from twisted.python import htmlizer
         from StringIO import StringIO
         output = StringIO()
-        try:
-            htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
-        except AttributeError:
-            output = StringIO("""Starting after Nevow 0.4.1 Twisted
-2.0 is a required dependency. Please install it""")
+        htmlizer.filter(open(path), output, writer=htmlizer.SmallerHTMLWriter)
         return tags.xml(output.getvalue())
 
     docFactory = loaders.stan(
@@ -50,15 +46,28 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
+def getExamples():
+    liveChildren = {}
+    for mod in os.listdir(util.sibpath(__file__,'examples')):
+        if mod == '__init__.py' or not mod.endswith('.py'):
+            continue
+        modID = mod[:-3]
+        print "Finding example 'examples.%s.example'" % (modID,)
+        example = reflect.namedAny('examples.%s.Example' % (modID,))
+        liveChildren[modID] = example
+    return liveChildren
+
 class NufoxExamples(xul.XULPage):
+    
+    liveChildren = getExamples()
 
     child_sources = static.File('examples', defaultType='text/plain')
     child_sources.processors['.py'] = Sources
     child_sources.contentTypes = {}
     child_cssfile = static.File('examples/index.css')
     child_docs = static.File(util.sibpath(__file__, 'doc/html'))
-    
-    def __init__(self):
+
+    def setup(self):
         self.window = xul.Window(title='Nufox Examples')
         self.popupset = xul.PopupSet()
         self.mainLayout = xul.HBox(flex=1)
@@ -72,31 +81,25 @@ class NufoxExamples(xul.XULPage):
         self.display = xul.IFrame(flex=90, src="docs/introduction.html")
         self.mainLayout.append(self.leftSide, self.display)
         self.window.append(self.popupset, self.mainLayout)
-        
-        website = xul.ListItem(label="Nufox Website", 
-                               value='http://trac.nunatak.com.au/projects/nufox', 
+
+        website = xul.ListItem(label="Nufox Website",
+                               value='http://trac.nunatak.com.au/projects/nufox',
                             tooltip="Nufox Website")
 
-        docs = xul.ListItem(label="Documentation", 
-                            value='http://localhost:8080/docs/index.html', 
+        docs = xul.ListItem(label="Documentation",
+                            value='http://localhost:8080/docs/index.html',
                             tooltip="Nufox Documentation")
         self.linkBox.append(docs, website)
         self.linkBox.addHandler('onselect', self.linkClicked)
 
-        for mod in os.listdir(util.sibpath(__file__,'examples')):
-            if mod == '__init__.py' or not mod.endswith('.py'):
-                continue
-            modID = mod[:-3]
+        for (modID, example) in self.liveChildren.items():
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
-            print "Finding example 'examples.%s.example'" % (modID,) 
-            example = reflect.namedAny('examples.%s.example' % (modID,))
-            self.putChild(modID, example)
-            li = xul.ListItem(label=splitNerdyCaps(modID), value='0', 
-                              tooltip=ttID, 
+            li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
+                              tooltip=ttID,
                               context=puID)
             self.exampleBox.append(li)
-            tt = xul.ToolTip(id=ttID, orient="vertical", 
+            tt = xul.ToolTip(id=ttID, orient="vertical",
                 style="background-color: #33DD00;").append(
                     xul.Label(
                         value=example.__doc__ or "No Description"))
@@ -105,8 +108,8 @@ class NufoxExamples(xul.XULPage):
             viewExample.addHandler('oncommand', self.selectExample, modID)
             viewSource.addHandler('oncommand', self.selectSource, modID)
             pu = xul.Popup(id=puID).append(viewExample, viewSource)
-            self.popupset.append(tt, pu) 
-        
+            self.popupset.append(tt, pu)
+
     def selectExample(self, example):
         url = 'http://localhost:8080/%s' %(example,)
         self.display.setAttr('src', url)
@@ -116,20 +119,10 @@ class NufoxExamples(xul.XULPage):
         self.display.setAttr('src', url)
 
     def linkClicked(self):
-        self.linkBox.getAttr('value').addCallbacks(self.selectLink,
-                                                   log.err)
+        self.linkBox.getAttr('value').addCallbacks(self.selectLink, log.err)
 
     def selectLink(self, url):
-            self.display.setAttr('src', url)
+        self.display.setAttr('src', url)
 
-
-from twisted.application import internet, service
-from nevow import appserver
-
-
-application = service.Application('xulstan')
-webServer = internet.TCPServer(8080, appserver.NevowSite(NufoxExamples()),
-    interface='127.0.0.1')
-webServer.setServiceParent(application)
-
-
+application = deploy.NufoxServer('NufoxExamples', 8080, NufoxExamples, 
+                               interface='127.0.0.1')

@@ -5,8 +5,8 @@ from nevow import livepage
 
 from twisted.manhole import service
 
-class Manhole(xul.XULPage):
-    def __init__(self):
+class Example(xul.XULPage):
+    def setup(self):
         self.ns = {}
         self.window = xul.Window(height=400, width=400, title="Manhole")
         v = xul.VBox(flex=1)
@@ -31,5 +31,3 @@ class Manhole(xul.XULPage):
          
     def updateOutput(self, result, oldResult):
         self.outbox.setAttr('value', oldResult + '\n' + result)
-
-example = Manhole()
