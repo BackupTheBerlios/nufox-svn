@@ -1,7 +1,8 @@
 from twisted.internet import defer
 from twisted.python.util import sibpath
-from nevow import url, loaders, inevow, athena, static, tags as T, flat
-import xmlstan
+from nevow import url, loaders, inevow, static, tags as T, flat
+from nufox import xmlstan
+from nufox.athena import athena
 
 #these are XUL elements that should not have an end tag, add to the
 #list as you find more:
@@ -143,11 +144,17 @@ class XULPage(athena.LivePage):
         return athena.LivePage.renderHTTP(self, ctx)
 
     def childFactory(self, ctx, name):
+        #XXX remove me once nevow includes athena! XXX
+        js = {'mochikit.js': 'MochiKit.js', 'athena.js' : 'athena.js'}
+        if name.lower() in js:
+            return static.File(
+                sibpath(__file__, 'athena/%s' % (js[name.lower()],)))
+        #XXX end ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ XXX
         if name in self.liveChildren:
             return self.factory.getChildFactory(
                 name, self.liveChildren[name],
                 XULLivePageFactory).clientFactory(ctx)
-        return athena.LivePage.childFactory(self, ctx, name)
+#        return athena.LivePage.childFactory(self, ctx, name)
 
 
 class GenericWidget(object):

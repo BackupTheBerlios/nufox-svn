@@ -52,4 +52,4 @@ class Example(xul.XULPage):
         form.addHandler('oncommand', self.handleSubmit)
 
     def handleSubmit(self, *args):
-        self.display.setAttr('value', "You submitted:\n %s" % (args,))
+        self.display.setAttr('value', u"You submitted: %s %s %s" % args)

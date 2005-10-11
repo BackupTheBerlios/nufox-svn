@@ -7,7 +7,7 @@ var rCall = function(element, event) {
         //Lets look for some special args like a__<id>__<attribute>
         if(arguments[i].split('__').length > 1) {
             var bits = arguments[i].split('__');
-            args.push(self.getElementById(bits[1]).getAttribute(bits[2]))
+            args.push(getElement(bits[1])[bits[2]]);
         } else {
             args.push(arguments[i]);
         }
