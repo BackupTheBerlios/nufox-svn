@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.3.7: http://docutils.sourceforge.net/" />
+<title>1 Introduction</title>
+<link rel="stylesheet" href="default.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="title">
+<h1 class="title">1 Introduction</h1>
+<a id="top" name="top"></a><div class="navbar"><span class="docTitle">Nufox Documentation Manual</span><br /><span class="right">Previous: <a href="index.html">[Table of Contents]</a>Up: <a href="index.html">[Table of Contents]</a>Home: <a href="index.html">[Table of Contents]</a></span></div>
+<hr class="docutils" />
+<div class="section" id="id1">
+<h1><a name="id1">1 Introduction</a></h1>
+<div class="section" id="what-is-nufox">
+<h2><a name="what-is-nufox">What is Nufox?</a></h2>
+<p>Jargon: 
+<a class="reference" href="http://trac.nunatak.com.au/projects/nufox">Nufox</a> is a <a class="reference" href="http://www.python.org">Python</a>, <a class="reference" href="http://www.twistedmatrix.com">Twisted</a> and <a class="reference" href="http://www.nevow.com">Nevow</a> derived server-side <a class="reference" href="http://www.xulplanet.com">XUL</a> framework
+created to produce GUI's renderable in <a class="reference" href="http://www.mozilla.org">Gecko</a> based viewers.</p>
+<p>Now thats out of the way,</p>
+<p>Nufox is a framework for developing applications with the kind of graphical user 
+interfaces that people expect from modern desktop applications. The cool thing
+about nufox is that you get to do this from the comfort of your webserver, as
+Nufox applications are distributed via HTTP in the same way any conventional 
+web app is. Nufox is comparable to solutions like <a class="reference" href="http://www.laszlosystems.com">Laszlo</a>, but without the Java 
+or need to write XML.</p>
+</div>
+<div class="section" id="how-does-this-benifit-you">
+<h2><a name="how-does-this-benifit-you">How does this benifit you?</a></h2>
+<ul class="simple">
+<li>Your Application is cross platform, and will render using the native toolkit
+on Linux, OSX and Windows.</li>
+<li>You don't need to worry about distributing a client, the Mozilla people have
+that angle covered.</li>
+<li>As there is no client to distribute, there are no client/server version
+mis-match issues, if you make a change to the UI it is propagated to your 
+users.</li>
+<li>Your client/server communication happens over port 80, resulting in reduced 
+firewall issues and sys admin angst.</li>
+<li>A bevvey of tools already exist to support development, ie: the Mozilla DOM 
+Inspector, Venkman the Javascript Debugger, and more.</li>
+<li>Nufox provides the benifits of the XUL platform, without the need to write a
+single line of markup.</li>
+</ul>
+<p>An example:</p>
+<pre>
+<span class="py-src-keyword">from</span> <span class="py-src-variable">nufox</span> <span class="py-src-keyword">import</span> <span class="py-src-variable">xul</span>
+
+<span class="py-src-keyword">class</span> <span class="py-src-identifier">MyPage</span>(<span class="py-src-parameter">xul</span>.<span class="py-src-parameter">XULPage</span>):
+
+    <span class="py-src-keyword">def</span> <span class="py-src-identifier">__init__</span>(<span class="py-src-parameter">self</span>):
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">window</span> = <span class="py-src-variable">xul</span>.<span class="py-src-variable">Window</span>(<span class="py-src-variable">title</span>=<span class="py-src-string">"nufox!"</span>, <span class="py-src-variable">width</span>=<span class="py-src-number">400</span>, <span class="py-src-variable">height</span>=<span class="py-src-number">400</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">button</span> = <span class="py-src-variable">xul</span>.<span class="py-src-variable">Button</span>(<span class="py-src-variable">label</span>=<span class="py-src-string">"Push Me"</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">button</span>.<span class="py-src-variable">addHandler</span>(<span class="py-src-string">'oncommand'</span>, <span class="py-src-variable">self</span>.<span class="py-src-variable">pushed</span>)
+        <span class="py-src-variable">self</span>.<span class="py-src-variable">window</span>.<span class="py-src-variable">append</span>(<span class="py-src-variable">self</span>.<span class="py-src-variable">button</span>)
+
+    <span class="py-src-keyword">def</span> <span class="py-src-identifier">pushed</span>(<span class="py-src-parameter">self</span>):
+        <span class="py-src-keyword">print</span> <span class="py-src-string">"You pushed me"</span>
+</pre>
+<hr class="docutils" />
+<a href="#top">[Return to Top]</a><span class="genNote">Last updated on Wed, 24 Aug 2005</span>
+</div>
+</div>
+</div>
+</body>
+</html>
