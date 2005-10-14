@@ -31,7 +31,7 @@ class Grid(xul.GenericWidget):
             rows.append(xul.Row().append(*l))
         grid.append(columns, rows)
         return grid
-    
+
 class Player(xul.GenericWidget):
     """I am a media player, I require either the helix or realplayer plugin"""
 
@@ -58,38 +58,6 @@ class Player(xul.GenericWidget):
     def getTag(self):
         return xul.htmlns.embed(**self.kwargs)
 
-class SequenceSubject(object):
-    """
-    I fill the role of a subject in the observer pattern.
-    http://sern.ucalgary.ca/courses/SENG/609.04/W98/lamsh/observerLib.html
-    I specialise at sequences which allows me to be
-    a bit smarter in how I notify my observers of
-    updates.
-    """
-    def __init__(self, seq=[]):
-        self.data = seq
-        self.observers = []
-
-    def addObserver(self, ob, mapper):
-        self.observers.append((ob, mapper))
-        ob.notifySet([(item, mapper(item)) for item in self.data])
-
-    def set(self, seq):
-        self.data = seq
-        for ob, mapper in self.observers:
-            ob.notifySet([(item, mapper(item)) for item in self.data])
-
-    def append(self, *items):
-        self.data += items
-        for ob, mapper in self.observers:
-            ob.notifyAppend([(item, mapper(item)) for item in items])
-
-    def remove(self, *items):
-        for item in items:
-            self.data.remove(item)
-        for ob, mapper in self.observers:
-            ob.notifyRemove(items)
-
 
 class CompositeTreeBase(xul.GenericWidget):
     def __getattr__(self, name):
@@ -97,7 +65,7 @@ class CompositeTreeBase(xul.GenericWidget):
         delegate most of genericwidget's interface to our tree widget
         """
         if name in [
-            'children', 'id', 'pageCtx', 'rend', 'rendPostLive',
+            'children', 'id', 'pageCtx', 'rend',
             'addHandler', 'handlers', 'getTag'
         ]:
             return getattr(self.tree, name)
@@ -111,10 +79,14 @@ class SimpleTree(CompositeTreeBase):
     @param headerLabels: a tuple of strings for the tree's
     column headers.
 
+    @param mapper: a function which maps an item to the
+    column values for the tree row which will represent that
+    item
+
     @param kwargs: kwargs to configure the actual xul.Tree widget
     """
 
-    def __init__(self, headerLabels, **kwargs):
+    def __init__(self, headerLabels, mapper, items=None, **kwargs):
         t = xul.Tree(**kwargs)
         th = xul.TreeCols()
         for cell in headerLabels:
@@ -128,25 +100,30 @@ class SimpleTree(CompositeTreeBase):
         self.clientIDtoItem = {}
         self.wrappedHandlers = {}
 
-    def _addChild(self, rowLabels, item):
-        ti = xul.TreeItem()
-        self.clientIDtoItem[str(ti.id)] = item
-        tr = xul.TreeRow()
-        for label in rowLabels:
-            tr.append(xul.TreeCell(label=str(label)))
-        ti.append(tr)
-        self.treeChildren.append(ti)
+        self.mapper = mapper
+        if items: self.set(items)
 
-    def notifySet(self, items):
+    def _addChildren(self, *items):
+        for item in items:
+            rowLabels = self.mapper(item)
+            print rowLabels
+            ti = xul.TreeItem()
+            self.clientIDtoItem[str(ti.id)] = item
+            tr = xul.TreeRow()
+            for label in rowLabels:
+                tr.append(xul.TreeCell(label=label))
+            ti.append(tr)
+            self.treeChildren.liveAppend(ti)
+
+    def set(self, items):
         self.treeChildren.clear()
         self.clientIDtoItem = {}
-        self.notifyAppend(items)
+        self._addChildren(*items)
 
-    def notifyAppend(self, items):
-        for item, rowLabels in items:
-            self._addChild(rowLabels, item)
+    def append(self, *items):
+        self._addChildren(*items)
 
-    def notifyRemove(self, items):
+    def remove(self, items):
         for item in items:
             for id, value in self.clientIDtoItem.items():
                 if item == value:
@@ -155,28 +132,26 @@ class SimpleTree(CompositeTreeBase):
                     del self.clientIDtoItem[id]
                     break
 
-    def addHandler(self, event, handler, *js):
+    def addHandler(self, event, handler, *args):
         if event in ["ondblclick", "onselect"]:
             self.wrappedHandlers[event] = handler
-            js = [livepage.js.TreeGetSelected(self.tree.id)] + list(js)
+            args = [
+                self.requestFunction("TreeGetSelected", self.tree.id)
+            ] + list(args)
             self.tree.addHandler(event,
                 lambda id, e=event, s=self, *a: s.onWrappedEvent(e, id, *a),
-                *js)
+                *args)
         else:
             self.tree.addHandler(event, handler, *js)
 
     def onWrappedEvent(self, event, id, *args):
-        self.wrappedHandlers[event](self.clientIDtoItem[id], *args)
+        self.wrappedHandlers[event](self.clientIDtoItem[id[0]], *args)
 
     def getSelection(self):
         def _cbTreeGetSelection(result):
             if not result: return []
             return [self.clientIDtoItem[id] for id in result.split(',')]
-
-        d = Deferred()
-        getter = self.pageCtx.client.transient(lambda ctx, r: d.callback(r))
-        self.pageCtx.client.send(getter(livepage.js.TreeGetSelected(
-            self.tree.id)))
+        d = self.pageCtx.callRemote("TreeGetSelected", self.tree.id)
         d.addCallback(_cbTreeGetSelection)
         return d
 
