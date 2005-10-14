@@ -84,6 +84,11 @@ class XULPage(athena.LivePage):
             return lambda ctx, methodName, *args: self.handlers[widgetID][event][0](*args)
         return athena.LivePage.locateMethod(self, ctx, methodName)
 
+    def requestFunction(self, func, *args):
+        """You can pass me as an extra argument to addHandler to get the result
+        of a global function passed to your handler"""
+        return ["_f", func, list(args)]
+
     def renderHTTP(self, ctx):
 
         self.setup()
@@ -255,13 +260,16 @@ class GenericWidget(object):
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result
         of this attribute lookup passed to your handler."""
-        return "a__%s__%s" % (self.id, attr)
+        return ["_a", self.id, attr]
+
+    def requestMethod(self, method, *args):
+        """You can pass me as an extra argument to addHandler to get the result
+        of this method passed to your handler."""
+        return ["_m", self.id, method, list(args)]
 
     def addHandler(self, event, handler, *args):
-        arguments = ""
-        if len(args) != 0:
-            arguments = ", " + ",".join(map((lambda s: "'%s'" % (s,)),args))
-        call = "rCall(this, '%s'%s)" % (event, arguments)
+        args = ["'%s'" % event] + [repr(a) for a in args]
+        call = "rCall(this, %s)" % ", ".join(args)
         self.handlers[event] = (handler, call)
 
 

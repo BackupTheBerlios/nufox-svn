@@ -1,13 +1,31 @@
 /* BEGIN Core functions for nufox */
 
 var rCall = function(element, event) {
+
     var args = [];
     args.push("__"+element.id+"__"+event); //The event handler to call
+
     for (var i = 1; i < arguments.length; i++) {
-        //Lets look for some special args like a__<id>__<attribute>
-        if(arguments[i].split('__').length > 1) {
-            var bits = arguments[i].split('__');
-            args.push(getElement(bits[1])[bits[2]]);
+
+        // Lets look for some special args
+        var a = arguments[i];
+        if(typeof(a) == typeof([]) && a.length > 1) {
+            switch(a[0]) {
+                case '_a':
+                    var el = document.getElementById(a[1]);
+                    if(el[a[2]]==undefined) args.push(el.getAttribute(a[2]));
+                    else args.push(el[a[2]]);
+                    break;
+                case '_m':
+                    var el = document.getElementById(a[1]);
+                    args.push(el[a[2]].apply(el, a[3]));
+                    break;
+                case '_f':
+                    args.push(window[a[1]].apply(window, a[2]));
+                    break;
+                default:
+                    args.push(arguments[i]);
+            }
         } else {
             args.push(arguments[i]);
         }
@@ -30,6 +48,7 @@ var appendNodes = function(newNodesList) {
         var node = newNodesList[n];
         addNode(node[0], node[1], node[2]);
     }
+    return true;
 }
 
 var remove = function(parentId, childId) {
