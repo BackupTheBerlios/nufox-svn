@@ -1,4 +1,0 @@
-recursive-include nufox *.js
-recursive-include examples *.py *.tac
-recursive-include doc *
-include LICENCE examples.tac CONTRIBUTORS

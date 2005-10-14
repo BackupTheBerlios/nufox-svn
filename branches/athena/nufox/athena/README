@@ -1,8 +1,0 @@
-Athena was to be a part of the 0.5 nevow release and is a hard dependancy 
-for nufox. With the 0.5 release announced and no athena included with it
-I've copied the athena code from exarkun's callRemote-2 branch of nevow to
-Nufox. This will be periodically updated until a time comes when athena is
-released with nevow. Glyph says that should be 0.6 which is only a few 
-weeks away.
-
--tjs
