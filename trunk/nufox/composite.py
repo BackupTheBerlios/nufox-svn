@@ -124,13 +124,15 @@ class SimpleTree(CompositeTreeBase):
         self._addChildren(*items)
 
     def remove(self, items):
+        childrenToDelete = []
         for item in items:
             for id, value in self.clientIDtoItem.items():
                 if item == value:
                     child = self.treeChildren.getChild(id)
-                    self.treeChildren.remove(child)
+                    childrenToDelete.append(child)
                     del self.clientIDtoItem[id]
                     break
+        return self.treeChildren.remove(*childrenToDelete)
 
     def addHandler(self, event, handler, *args):
         if event in ["ondblclick", "onselect"]:
@@ -147,10 +149,14 @@ class SimpleTree(CompositeTreeBase):
     def onWrappedEvent(self, event, id, *args):
         self.wrappedHandlers[event](self.clientIDtoItem[id[0]], *args)
 
+    def idsToItems(self, ids):
+        return [self.clientIDtoItem[id] for id in ids]
+
     def getSelection(self):
         def _cbTreeGetSelection(result):
-            if not result: return []
-            return [self.clientIDtoItem[id] for id in result.split(',')]
+            ids = result[0][0]
+            if not ids: return []
+            return self.idsToItems(ids)
         d = self.pageCtx.callRemote("TreeGetSelected", self.tree.id)
         d.addCallback(_cbTreeGetSelection)
         return d

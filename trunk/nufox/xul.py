@@ -224,10 +224,10 @@ class GenericWidget(object):
         deferred."""
         for widget in widgets:
             self.children.remove(widget)
-            if self.alive:
-                return self.pageCtx.callRemote('removeNodes',
-                                               [w.id for w in widgets])
-            return defer.succeed(None)
+        if self.alive:
+            return self.pageCtx.callRemote('removeNodes', self.id,
+                                           [w.id for w in widgets])
+        return defer.succeed(None)
 
     def clear(self):
         """Remove all widgets under this one."""

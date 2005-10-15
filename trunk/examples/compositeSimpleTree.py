@@ -33,9 +33,13 @@ class Example(xul.XULPage):
         v.append(hbox)
 
         b = xul.Button(label="The Give Me More Button")
-        b.addHandler('oncommand', self.buttonPushed,
+        b.addHandler('oncommand', self.onAdd,
             self.nameTextBox.requestAttr('value'),
             self.ageTextBox.requestAttr('value'))
+        v.append(b)
+
+        b = xul.Button(label="The Give Me Less Button")
+        b.addHandler('oncommand', self.onRemove)
         v.append(b)
 
         self.tree = composite.SimpleTree(
@@ -51,13 +55,19 @@ class Example(xul.XULPage):
 
         self.window.append(v)
 
-    def buttonPushed(self, name, age):
+    def onAdd(self, name, age):
         self.tree.append(Person(name, age))
 
     def onTreeDblClick(self, item):
         print "FROAR!"
         print "You Double Clicked Person: %s" % item
         print
+
+    def onRemove(self):
+        def _cb_onRemove(items):
+            self.tree.remove(items)
+        d = self.tree.getSelection()
+        d.addCallback(_cb_onRemove)
 
 def log(r):
     print "LOGGING ",r

@@ -58,8 +58,8 @@ var remove = function(parentId, childId) {
 }
 
 var removeNodes = function(parentId, nodesToRemove) {
-    for(n in nodesToRemove) {
-        remove(parentId, n);
+    for(var n in nodesToRemove) {
+        remove(parentId, nodesToRemove[n]);
     }
 }
 
