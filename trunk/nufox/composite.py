@@ -136,7 +136,7 @@ class SimpleTree(CompositeTreeBase):
         if event in ["ondblclick", "onselect"]:
             self.wrappedHandlers[event] = handler
             args = [
-                self.requestFunction("TreeGetSelected", self.tree.id)
+                xul.requestFunction("TreeGetSelected", self.tree.id)
             ] + list(args)
             self.tree.addHandler(event,
                 lambda id, e=event, s=self, *a: s.onWrappedEvent(e, id, *a),

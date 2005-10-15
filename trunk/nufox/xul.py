@@ -15,6 +15,12 @@ xulns = xmlstan.PrimaryNamespace('xul',
     singletons=singletons)
 
 
+def requestFunction(func, *args):
+    """You can pass me as an extra argument to addHandler to get the result
+    of a global function passed to your handler"""
+    return ["_f", func, list(args)]
+
+
 class XULLivePageFactory(athena.LivePageFactory):
     """
     I am a LivePageFactory subclass that stores child factory isntances.
@@ -83,11 +89,6 @@ class XULPage(athena.LivePage):
             fud, widgetID, event = methodName.split('__')
             return lambda ctx, methodName, *args: self.handlers[widgetID][event][0](*args)
         return athena.LivePage.locateMethod(self, ctx, methodName)
-
-    def requestFunction(self, func, *args):
-        """You can pass me as an extra argument to addHandler to get the result
-        of a global function passed to your handler"""
-        return ["_f", func, list(args)]
 
     def renderHTTP(self, ctx):
 
