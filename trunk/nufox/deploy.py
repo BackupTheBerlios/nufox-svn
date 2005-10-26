@@ -1,4 +1,5 @@
-from twisted.internet import defer
+import os
+from twisted.internet import defer, reactor, utils
 from twisted.application import internet, service
 from nevow import rend, appserver
 from nufox import xul
@@ -38,3 +39,22 @@ def NufoxServer(serviceName, port, XULRootPage, **kwargs):
     ws = internet.TCPServer(port, NufoxSite(XULRootPage), **kwargs)
     ws.setServiceParent(application)
     return application
+
+def NufoxDesktopApp(XULRootPage):
+    """Use this to run a server with a single client on the same machine."""
+
+    def start():
+        d = utils.getProcessOutput('/usr/bin/firefox',
+                                   ['-chrome', 'http://127.0.0.1:8090'],
+                                   os.environ)
+        d.addCallback(stop)
+
+    def stop(r):
+        print "terminated:",r
+        reactor.stop()
+
+    reactor.callLater(0, start)
+    return NufoxServer('NufoxDesktopApp', 8090, XULRootPage,
+                       interface="127.0.0.1")
+
+
