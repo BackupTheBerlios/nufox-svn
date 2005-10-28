@@ -203,12 +203,20 @@ class GenericWidget(object):
             newNodes = []
             def marshal(parent):
                 for child in parent.children:
-                    if child.alive:
+                    if getattr(child,'alive',False):
                         continue
                     child.alive = True
-                    newNodes.append((
-                        parent.id, child.tag.decode('ascii'), child.kwargs))
-                    marshal(child)
+                    if isinstance(child, (xmlstan.NSTag, xmlstan.Tag)):
+                        pass
+                        #XXX FIXME this is BROKEN and needs fixing
+                        #raise NotImplementedError(
+                        #    "liveAppend anything but XUL widgets is broken! %r" % child )
+                        #newNodes.append((parent.id, child.tagName, child.attributes))
+                        #marshal(child)
+                    else:
+                        newNodes.append((
+                            parent.id, child.tag.decode('ascii'), child.kwargs))
+                        marshal(child)
             marshal(self)
             d = self.pageCtx.callRemote('appendNodes', newNodes)
             d.addCallback(lambda r: self)
@@ -296,7 +304,8 @@ class Window(GenericWidget):
         self.setAttr('title', title)
 #        self.pageCtx.client.send(
 #            livepage.js('document.title = \'%s\';' % title))
-
+        self.callRemote('setWindowTitle', title)
+        
     def setDimensions(self, width=None, height=None):
         width = width or self.kwargs.get('width')
         height = height or self.kwargs.get('height')
@@ -305,6 +314,7 @@ class Window(GenericWidget):
         self.setAttr('width', width)
 #       self.pageCtx.client.send(
 #            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
+        self.callRemote('resizeWindow', width, height)
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))

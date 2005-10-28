@@ -87,6 +87,21 @@ var getAttr = function(id, attr) {
 var err = function(error) {
     alert("Error: " + error);
 }
+
+var newWindow = function(url) {
+    //window.open(url, null, 'width=300, height=300');
+    window.open(url, null);
+}
+
+var setWindowTitle = function(title) {
+    alert('adsasdff');
+    document.title = title;
+}
+
+var resizeWindow = function(width, height) {
+    alert('adsf');
+    window.resizeTo(width, height);
+}
 /* END Core functions for nufox */
 
 
