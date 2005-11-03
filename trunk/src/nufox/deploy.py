@@ -40,13 +40,14 @@ def NufoxServer(serviceName, port, XULRootPage, **kwargs):
     ws.setServiceParent(application)
     return application
 
-def NufoxDesktopApp(XULRootPage):
+def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
     """Use this to run a server with a single client on the same machine."""
 
     def start():
-        d = utils.getProcessOutput('/usr/bin/firefox',
-                                   ['-chrome', 'http://127.0.0.1:8090'],
-                                   os.environ)
+        args = ['-chrome', 'http://127.0.0.1:8090']
+        if firefoxArgs:
+            args.extend(firefoxArgs)
+        d = utils.getProcessOutput('/usr/bin/firefox', args, os.environ)
         d.addCallback(stop)
 
     def stop(r):
