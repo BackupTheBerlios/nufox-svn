@@ -42,7 +42,7 @@ setup(
     },
 
     install_requires = [
-    ## Fill me in.
+    'Nevow>=0.6',
     ],
 
     )
