@@ -298,7 +298,7 @@ class Window(GenericWidget):
         self.setAttr('title', title)
 #        self.pageCtx.client.send(
 #            livepage.js('document.title = \'%s\';' % title))
-        self.callRemote('setWindowTitle', title)
+        self.pageCtx.callRemote('setWindowTitle', title)
         
     def setDimensions(self, width=None, height=None):
         width = width or self.kwargs.get('width')
@@ -308,7 +308,7 @@ class Window(GenericWidget):
         self.setAttr('width', width)
 #       self.pageCtx.client.send(
 #            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
-        self.callRemote('resizeWindow', width, height)
+        self.pageCtx.callRemote('resizeWindow', width, height)
 
     def getTag(self):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
