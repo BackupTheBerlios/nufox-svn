@@ -1,0 +1,12 @@
+website: trac.nunatak.com.au/projects/nufox
+contact: tjs@nunatak.com.au
+licence: LGPL, (c) contributors
+
+depends: 
+    twisted 2.1.0+      http://twistedmatrix.com 
+    Nevow 0.5.0         http://divmod.org/projects/nevow
+
+To run the examples:
+
+> twistd -noy examples.tac
+> firefox http://localhost:8080
