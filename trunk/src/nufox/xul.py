@@ -355,7 +355,7 @@ bigListOXulTags = ['Action', 'ArrowScrollBox', 'BBox', 'Binding', 'Bindings',
     'ToolBarItem', 'ToolBarPalette', 'ToolBarSeparator', 'ToolbarSet',
     'ToolBarSpacer', 'ToolBarSpring', 'ToolBox', 'ToolTip', 'Tree', 'TreeCell',
     'TreeChildren', 'TreeCol', 'TreeCols', 'TreeItem', 'TreeRow',
-    'TreeSeparator','Triple', 'VBox', 'Window', 'Wizard', 'wizardPage']
+    'TreeSeparator','Triple', 'VBox', 'Window', 'Wizard', 'WizardPage']
 
 g = globals()
 
