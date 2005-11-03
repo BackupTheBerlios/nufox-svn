@@ -1,13 +1,17 @@
+"""Nufox standard XUL classes and widgets."""
+
 from twisted.internet import defer
 from twisted.python.util import sibpath
+
 from nevow import athena, url, loaders, inevow, static, tags as T, flat
+
 from nufox import xmlstan
 
-#these are XUL elements that should not have an end tag, add to the
-#list as you find more:
+# These are XUL elements that should not have an end tag. Please add
+# to the list as you find more:
 singletons = ('key',)
 
-#XML Namespaces
+# XML Namespaces.
 htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
 xulns = xmlstan.PrimaryNamespace('xul',
     'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul',
@@ -15,15 +19,16 @@ xulns = xmlstan.PrimaryNamespace('xul',
 
 
 def requestFunction(func, *args):
-    """You can pass me as an extra argument to addHandler to get the result
-    of a global function passed to your handler"""
+    """Get the result of a global function passed to a handler.
+
+    Pass as an extra argument to addHandler calls.
+    """
     return ["_f", func, list(args)]
 
 
 class XULLivePageFactory(athena.LivePageFactory):
-    """
-    I am a LivePageFactory subclass that stores child factory isntances.
-    """
+    """LivePageFactory that stores child factory instances."""
+    
     def __init__(self, *args, **kwargs):
         self.childFactories = {}
         athena.LivePageFactory.__init__(self, *args, **kwargs)
@@ -37,11 +42,27 @@ class XULLivePageFactory(athena.LivePageFactory):
 
 
 class XULPage(athena.LivePage):
-    """I am a nevow resource that renders XUL. You should set a xul widget to
-    self.window in your subclass' setup method. js and css attributes can be
-    used to add inline javascript or css to your page.
-    jsIncludes and cssIncludes are lists of urls to javascript and css files
-    respectivly, and if set will be included as links in the output. """
+    """Nevow resource that renders XUL.
+
+    Important methods:
+
+    - `setup(self)`: Create this method in your subclass, and have it
+      set `self.window` to the main XUL widget for your XULPage.
+
+    Important attributes:
+
+    - `css`: Optional - source of stylesheet to include in the page
+      after loading glue scripts.
+
+    - `cssIncludes`: Optional - list of stylesheet URLs to link to in
+      the page after loading glue scripts.
+
+    - `js`: Optional - source of JavaScript to include in the page
+      after loading glue scripts.
+
+    - `jsIncludes`: Optional - list of JavaScript URLs to link to in
+      the page after loading glue scripts.
+    """
 
     js = None
     css = None
@@ -90,45 +111,22 @@ class XULPage(athena.LivePage):
         return athena.LivePage.locateMethod(self, ctx, methodName)
 
     def renderHTTP(self, ctx):
-
+        # Call user-defined setup, so self.window becomes available.
         self.setup()
-
-        #ensure that we are delivered with the correct content type header
-        inevow.IRequest(ctx).setHeader("Content-Type",
+        # Ensure that we are delivered with the correct content type
+        # header.
+        inevow.IRequest(ctx).setHeader(
+            "Content-Type",
             "application/vnd.mozilla.xul+xml; charset=%s" % (self.charset,))
-
-        #Do something a bit magical.. glue css/js stuff into the window before
-        #any other widgets so they get read first.
-        if self.css is not None:
-            self.window.children.insert(0,
-                htmlns.style(type="text/css")[self.css])
-        self.css = None
-
-        for css in self.cssIncludes:
-            self.window.children.insert(0,
-                htmlns.style(type="text/css", src=css))
-        self.cssIncludes = []
-
-        if self.js is not None:
-            self.window.children.insert(0,
-                htmlns.script(type="text/javascript")[self.js])
-        self.js = None
-
-        for js in self.jsIncludes:
-            self.window.children.insert(0,
-                htmlns.script(type="text/javascript", src=js))
-        self.jsIncludes = []
-
-        # Install glue scripts if necessary.
-        if not self.glueInstalled:
-            self.installGlue()
-            self.glueInstalled = True
-
-        #make sure our XUL tree is loaded and our correct doc type is set
+        # Apply user-defined and required glue.
+        self.applyAllGlue()
+        # Make sure our XUL tree is loaded and our correct doc type is
+        # set.
         self.docFactory = loaders.stan([
             T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
-            self.window])
-        #return our XUL
+            self.window,
+            ])
+        # Return our XUL.
         return athena.LivePage.renderHTTP(self, ctx)
 
     def childFactory(self, ctx, name):
@@ -139,32 +137,51 @@ class XULPage(athena.LivePage):
         else:
             return athena.LivePage.childFactory(self, ctx, name)
 
-    def installGlue(self):
-        """Install all glue scripts in the proper order.
+    def applyAllGlue(self):
+        """Install all glue scripts in the proper order."""
+        if not self.glueInstalled:
+            # Apply user-supplied glue.  Glue is applied in reverse
+            # order.
+            self.applyCssCode(self.css)
+            for URL in self.cssIncludes:
+                self.applyCssUrl(URL)
+            self.applyJsCode(self.js)
+            for URL in self.jsIncludes:
+                self.applyJsUrl(URL)
+            # Required glue is at the top of the chain.
+            self.applyJsUrl(
+                url.here.child('javascript').child('postLiveglue.js'))
+            self.applyLiveglue()
+            self.applyJsUrl(
+                url.here.child('javascript').child('preLiveglue.js'))
+            # Done.
+            self.glueInstalled = True
 
-        If subclassing and adding your own glue, use this recipe for
-        your `installGlue` method:
+    def applyCssCode(self, code):
+        """Include CSS code during glue loading."""
+        if code:
+            self.window.children.insert(0, htmlns.style(
+                type="text/css")[code])
 
-            # Install your own glue here, in reverse order of execution.
-            self.installJsGlue(url.here.child('...'))
-            # Install rest of glue chain.
-            xul.XULPage.installGlue(self)
-        """
-        self.installJsGlue(
-            url.here.child('javascript').child('postLiveglue.js'))
-        self.installLiveGlue()
-        self.installJsGlue(
-            url.here.child('javascript').child('preLiveglue.js'))
+    def applyCssUrl(self, URL):
+        """Link to a CSS URL during glue loading."""
+        self.window.children.insert(0, htmlns.script(
+            type='text/css', src=URL))
 
-    def installLiveGlue(self):
+    def applyLiveglue(self):
         self.window.children.insert(0, T.invisible(
             render=T.directive('liveglue')))
 
-    def installJsGlue(self, src):
-        """Install a JavaScript child as glue as first script in
-        chain. See `installAllGlue`."""
+    def applyJsCode(self, code):
+        """Include JavaScript code during glue loading."""
+        if code:
+            self.window.children.insert(0, htmlns.script(
+                type="text/javascript")[code])
+
+    def applyJsUrl(self, URL):
+        """Link to a JavaScript URL during glue loading."""
         self.window.children.insert(0, htmlns.script(
-            type='text/javascript', src=src))
+            type='text/javascript', src=URL))
 
 
 class GenericWidget(object):
