@@ -44,5 +44,6 @@ setup(
     install_requires = [
     'Nevow>=0.6',
     ],
+    zip_safe = False,
 
     )
