@@ -119,27 +119,10 @@ class XULPage(athena.LivePage):
                 htmlns.script(type="text/javascript", src=js))
         self.jsIncludes = []
 
-        #We want to have javascript included in this order:
-        #   preLiveglue.js
-        #   liveglue.js
-        #   postLiveglue.ps
-
+        # Install glue scripts if necessary.
         if not self.glueInstalled:
-
-            self.window.children.insert(0, htmlns.script(
-                type="text/javascript", src=url.here.child(
-                    'javascript').child('postLiveglue.js')))
-
-            self.window.children.insert(0, T.invisible(
-                render=T.directive('liveglue')))
-
-            self.window.children.insert(0, htmlns.script(
-                type="text/javascript", src=url.here.child(
-                    'javascript').child('preLiveglue.js')))
-
+            self.installGlue()
             self.glueInstalled = True
-
-        #.. end magical
 
         #make sure our XUL tree is loaded and our correct doc type is set
         self.docFactory = loaders.stan([
@@ -155,6 +138,33 @@ class XULPage(athena.LivePage):
                 XULLivePageFactory).clientFactory(ctx)
         else:
             return athena.LivePage.childFactory(self, ctx, name)
+
+    def installGlue(self):
+        """Install all glue scripts in the proper order.
+
+        If subclassing and adding your own glue, use this recipe for
+        your `installGlue` method:
+
+            # Install your own glue here, in reverse order of execution.
+            self.installJsGlue(url.here.child('...'))
+            # Install rest of glue chain.
+            xul.XULPage.installGlue(self)
+        """
+        self.installJsGlue(
+            url.here.child('javascript').child('postLiveglue.js'))
+        self.installLiveGlue()
+        self.installJsGlue(
+            url.here.child('javascript').child('preLiveglue.js'))
+
+    def installLiveGlue(self):
+        self.window.children.insert(0, T.invisible(
+            render=T.directive('liveglue')))
+
+    def installJsGlue(self, src):
+        """Install a JavaScript child as glue as first script in
+        chain. See `installAllGlue`."""
+        self.window.children.insert(0, htmlns.script(
+            type='text/javascript', src=src))
 
 
 class GenericWidget(object):
