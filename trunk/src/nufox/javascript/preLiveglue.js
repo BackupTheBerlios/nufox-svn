@@ -94,12 +94,10 @@ var newWindow = function(url) {
 }
 
 var setWindowTitle = function(title) {
-    alert('adsasdff');
     document.title = title;
 }
 
 var resizeWindow = function(width, height) {
-    alert('adsf');
     window.resizeTo(width, height);
 }
 /* END Core functions for nufox */
