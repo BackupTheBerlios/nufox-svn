@@ -1,7 +1,10 @@
 import os
-from twisted.python import reflect, log, util
+
 from twisted.internet import utils as tiutils
+from twisted.python import log, reflect, util
+
 from nufox import xul, deploy
+
 
 def splitNerdyCaps(s):
     wordBuffer = []
@@ -46,6 +49,7 @@ class Sources(rend.Page):
 #End the liberation, thanks guys
 #################################
 
+
 def getExamples():
     liveChildren = {}
     for mod in os.listdir(util.sibpath(__file__,'examples')):
@@ -56,6 +60,7 @@ def getExamples():
         example = reflect.namedAny('examples.%s.Example' % (modID,))
         liveChildren[modID] = example
     return liveChildren
+
 
 class NufoxExamples(xul.XULPage):
     
@@ -82,9 +87,10 @@ class NufoxExamples(xul.XULPage):
         self.mainLayout.append(self.leftSide, self.display)
         self.window.append(self.popupset, self.mainLayout)
 
-        website = xul.ListItem(label="Nufox Website",
-                               value='http://trac.nunatak.com.au/projects/nufox',
-                            tooltip="Nufox Website")
+        website = xul.ListItem(
+            label="Nufox Website",
+            value='http://trac.nunatak.com.au/projects/nufox',
+            tooltip="Nufox Website")
 
         docs = xul.ListItem(label="Documentation",
                             value='http://localhost:8080/docs/index.html',
@@ -123,6 +129,7 @@ class NufoxExamples(xul.XULPage):
 
     def selectLink(self, url):
         self.display.setAttr('src', url)
+
 
 application = deploy.NufoxServer('NufoxExamples', 8080, NufoxExamples, 
                                interface='127.0.0.1')

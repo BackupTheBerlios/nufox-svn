@@ -1,7 +1,8 @@
-from nevow import livepage
 from nufox import xul
 
+
 class Example(xul.XULPage):
+
     def setup(self):
         self.counter = 0
         self.window = xul.Window(id="xul-window", height=400, width=400,

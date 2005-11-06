@@ -1,5 +1,5 @@
-from nevow import livepage
 from nufox import xul
+
 
 class Example(xul.XULPage):
 
@@ -30,6 +30,7 @@ class Example(xul.XULPage):
         d.addCallback(lambda r, s:
                 s('value', 'you chose: %s' % r),
             self.label.setAttr)
+
 
 def log(r):
     print "LOGGING ",r

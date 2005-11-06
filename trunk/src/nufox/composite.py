@@ -1,14 +1,23 @@
-"""These are composite widgets, that is, widgets composed of more than one
-XUL element, with special methods, and custom JS."""
+"""Nufox composite widgets.
 
-from nufox import xul
+Composite widgets manage collections of XUL elements for you. They
+expose higher-level methods on the Python side, and reduce round trips
+by using custom JavaScript on the XUL side.
+"""
+
 from nevow import livepage
+
 from twisted.internet.defer import Deferred
 
+from nufox import xul
+
+
 class Grid(xul.GenericWidget):
-    """I take a list of lists of XUL widgets, which i will render in a grid.
-    The grid is length of list by length of the longest list, shorter lists
-    will be padded with xul.Spacer() widgets."""
+    """Render a list of lists of XUL widgets into a grid.
+
+    The grid is length of list by length of the longest list. Shorter
+    lists will be padded with xul.Spacer() widgets.
+    """
 
     def __init__(self, l):
         xul.GenericWidget.__init__(self)
@@ -33,7 +42,9 @@ class Grid(xul.GenericWidget):
         return grid
 
 class Player(xul.GenericWidget):
-    """I am a media player, I require either the helix or realplayer plugin"""
+    """Helix/RealPlayer-based media player.
+
+    Requires Helix or RealPlayer plugin to be installed in Mozilla."""
 
     def __init__(self, mediaURL, width=300, height=300):
         xul.GenericWidget.__init__(self)
@@ -60,21 +71,21 @@ class Player(xul.GenericWidget):
 
 
 class CompositeTreeBase(xul.GenericWidget):
+    """Base class for tree widgets."""
+    
     def __getattr__(self, name):
-        """
-        delegate most of genericwidget's interface to our tree widget
-        """
+        # Delegate most of genericwidget's interface to our tree
+        # widget.
         if name in [
             'children', 'id', 'pageCtx', 'rend',
             'addHandler', 'handlers', 'getTag'
-        ]:
+            ]:
             return getattr(self.tree, name)
         raise AttributeError, name
 
 
 class SimpleTree(CompositeTreeBase):
-    """
-    I'm a simple tree widget for a 1 tier list of items
+    """Simple tree widget for a 1-tier list of items.
 
     @param headerLabels: a tuple of strings for the tree's
     column headers.
@@ -163,8 +174,8 @@ class SimpleTree(CompositeTreeBase):
 
 
 class NestedTree(CompositeTreeBase):
-    def __init__(self, abstraction, headerLabels, **kwargs):
 
+    def __init__(self, abstraction, headerLabels, **kwargs):
         self.abstraction = abstraction
 
         t = xul.Tree(

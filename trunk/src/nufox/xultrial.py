@@ -1,6 +1,10 @@
+"""XUL-based unit test support."""
+
 from twisted.internet import reactor
 from twisted.trial import unittest
+
 from nufox import xul
+
 
 class TestRunner(xul.XULPage):
 
@@ -67,6 +71,7 @@ class TestRunner(xul.XULPage):
         print "HANDLING EXCEPTION!"
         self.output.append(xul.Label(value=e))
         
+
 class XULTest(xul.XULPage, unittest.TestCase):
 
     def __init__(self):

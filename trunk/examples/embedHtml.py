@@ -1,8 +1,10 @@
 from nufox import xul
 from nufox.xul import htmlns as H
 
+
 class Example(xul.XULPage):
     """This example shows how you can embed conventional HTML into XUL."""
+
     def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
                                  title="Press this button!")

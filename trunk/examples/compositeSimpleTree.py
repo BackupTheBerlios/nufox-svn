@@ -1,16 +1,18 @@
-
 from twisted.internet.defer import gatherResults
 
-from nevow import livepage
 from nufox import xul, composite
 
+
 class Person:
+
     def __init__(self, name, age):
         self.name = name
         self.age = age
+
     def __str__(self):
         return "name: %s, age: %s" % (
             self.name, self.age)
+
 
 class Example(xul.XULPage):
 
@@ -68,6 +70,7 @@ class Example(xul.XULPage):
             self.tree.remove(items)
         d = self.tree.getSelection()
         d.addCallback(_cb_onRemove)
+
 
 def log(r):
     print "LOGGING ",r

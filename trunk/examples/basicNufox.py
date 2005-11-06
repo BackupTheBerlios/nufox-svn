@@ -1,5 +1,5 @@
-from nevow import livepage
 from nufox import xul
+
 
 class Example(xul.XULPage):
 
@@ -22,6 +22,7 @@ class Example(xul.XULPage):
             u'You have clicked %s times' % ( self.counter,))
         d = self.label.getAttr('value')
         d.addBoth(log)
+
 
 def log(r):
     print "LOGGING ",r

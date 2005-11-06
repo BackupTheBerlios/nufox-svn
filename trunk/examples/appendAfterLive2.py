@@ -1,7 +1,7 @@
 from twisted.internet.defer import gatherResults
 
-from nevow import livepage
 from nufox import xul
+
 
 class Example(xul.XULPage):
 
@@ -78,6 +78,7 @@ class Example(xul.XULPage):
 
     def treeSelect(self):
         self.tree.getAttr('value').addBoth(log)
+
 
 def log(r):
     print "LOGGING ",r

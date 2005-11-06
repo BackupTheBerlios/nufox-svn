@@ -11,6 +11,7 @@ from nufox import xmlstan
 # to the list as you find more:
 singletons = ('key',)
 
+
 # XML Namespaces.
 htmlns = xmlstan.TagNamespace('html', 'http://www.w3.org/1999/xhtml')
 xulns = xmlstan.PrimaryNamespace('xul',
@@ -107,7 +108,8 @@ class XULPage(athena.LivePage):
     def locateMethod(self, ctx, methodName):
         if methodName.startswith('__'):
             fud, widgetID, event = methodName.split('__')
-            return lambda ctx, methodName, *args: self.handlers[widgetID][event][0](*args)
+            return lambda ctx, methodName, *args: (
+                self.handlers[widgetID][event][0](*args))
         return athena.LivePage.locateMethod(self, ctx, methodName)
 
     def renderHTTP(self, ctx):
@@ -123,7 +125,9 @@ class XULPage(athena.LivePage):
         # Make sure our XUL tree is loaded and our correct doc type is
         # set.
         self.docFactory = loaders.stan([
-            T.xml("""<?xml version="1.0"?><?xml-stylesheet href="chrome://global/skin/" type="text/css"?>"""),
+            T.xml('<?xml version="1.0"?>'
+                  '<?xml-stylesheet href="chrome://global/skin/" '
+                  'type="text/css"?>'),
             self.window,
             ])
         # Return our XUL.
@@ -205,18 +209,20 @@ class GenericWidget(object):
         return self
 
     def append(self, *widgets):
-        """Use append when appending to widgets that are not live, returns
-        self, this is mostly useful in self.setup() and in methods that create
-        a sub-tree of widgets to return for appending to a live widget."""
+        """Use append when appending to widgets that are not live,
+        returns self, this is mostly useful in self.setup() and in
+        methods that create a sub-tree of widgets to return for
+        appending to a live widget."""
         if self.alive:
             raise RuntimeError("Use liveAppend to append to a live widget.")
         return self._append(*widgets)
 
     def liveAppend(self, *widgets):
-        """Use liveAppend when appending to widgets that are already live (on
-        the client). Returns a deferred. This will also work for non-live
-        widget appends, but will still return a deferred, for a more
-        convenient append api for non-live widgets, see append."""
+        """Use liveAppend when appending to widgets that are already
+        live (on the client). Returns a deferred. This will also work
+        for non-live widget appends, but will still return a deferred,
+        for a more convenient append api for non-live widgets, see
+        append."""
         if not self.alive:
             return defer.succeed(self.append(*widgets))
         else:
@@ -249,8 +255,8 @@ class GenericWidget(object):
         return self.append(*widgets)
 
     def remove(self, *widgets):
-        """Remove some widgets from the client under this one. returns a
-        deferred."""
+        """Remove some widgets from the client under this one. returns
+        a deferred."""
         for widget in widgets:
             self.children.remove(widget)
         if self.alive:
@@ -302,10 +308,11 @@ class GenericWidget(object):
         call = "rCall(this, %s)" % ", ".join(args)
         self.handlers[event] = (handler, call)
 
-
 flat.registerFlattener(lambda orig, ctx: orig.rend(ctx), GenericWidget)
 
-### WIDGETS BE HERE, ARGH! ###
+
+# --------------------------------------------------------------------
+
 
 class Window(GenericWidget):
 
@@ -341,9 +348,12 @@ class Window(GenericWidget):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         return xulns.window(xulns, htmlns, *self.xmlNameSpaces, **self.kwargs)
 
-### DYNAMICALLY GENERATED WIDGETS BE HERE, DOUBLE ARGH!! ###
+
+# --------------------------------------------------------------------
+# Dynamically generated widgets.
 
 class XULWidgetTemplate(GenericWidget):
+
     def __init__(self, **kwargs):
         if kwargs.has_key('id'):
             GenericWidget.__init__(self, kwargs['id'])
@@ -356,30 +366,36 @@ class XULWidgetTemplate(GenericWidget):
         self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         return getattr(xulns, self.tag)(**self.kwargs)
 
-#for each widget that has not yet been defined from our big list of XUL tags,
-#create a widget class that behaves like a good widget should and does nothing
-#fancy.
-bigListOXulTags = ['Action', 'ArrowScrollBox', 'BBox', 'Binding', 'Bindings',
-    'Box', 'Broadcaster', 'BroadcasterSet', 'Button', 'Browser', 'Checkbox',
-    'Caption', 'ColorPicker', 'Column', 'Columns', 'CommandSet', 'Command',
-    'Conditions', 'Content', 'Deck', 'Description', 'Dialog', 'DialogHeader',
-    'Editor', 'Grid', 'Grippy', 'GroupBox', 'HBox', 'IFrame', 'Image', 'Key',
-    'KeySet', 'Label', 'ListBox', 'ListCell', 'ListCol', 'ListCols',
-    'ListHead', 'ListHeader', 'ListItem', 'Member', 'Menu', 'MenuBar',
-    'MenuItem', 'MenuList', 'MenuPopup', 'MenuSeparator', 'Observes',
-    'Overlay', 'Page', 'Popup', 'PopupSet', 'ProgressMeter', 'Radio',
-    'RadioGroup', 'Resizer', 'Row', 'Rows', 'Rule', 'Script', 'Scrollbar',
-    'Scrollbox', 'Separator', 'Spacer', 'Splitter', 'Stack', 'StatusBar',
-    'StatusBarPanel', 'StringBundle', 'StringBundleSet', 'Tab', 'TabBrowser',
-    'TabBox', 'TabPanel', 'TabPanels', 'Tabs', 'Template', 'TextNode',
-    'TextBox', 'TitleBar', 'ToolBar', 'ToolBarButton', 'ToolBarGrippy',
-    'ToolBarItem', 'ToolBarPalette', 'ToolBarSeparator', 'ToolbarSet',
-    'ToolBarSpacer', 'ToolBarSpring', 'ToolBox', 'ToolTip', 'Tree', 'TreeCell',
-    'TreeChildren', 'TreeCol', 'TreeCols', 'TreeItem', 'TreeRow',
-    'TreeSeparator','Triple', 'VBox', 'Window', 'Wizard', 'WizardPage']
+
+# For each widget that has not yet been defined from our big list of
+# XUL tags, create a widget class that behaves like a good widget
+# should and does nothing fancy.
+bigListOXulTags = [
+    'Action', 'ArrowScrollBox', 'BBox', 'Binding',
+    'Bindings', 'Box', 'Broadcaster', 'BroadcasterSet', 'Button',
+    'Browser', 'Checkbox', 'Caption', 'ColorPicker', 'Column', 'Columns',
+    'CommandSet', 'Command', 'Conditions', 'Content', 'Deck',
+    'Description', 'Dialog', 'DialogHeader', 'Editor', 'Grid', 'Grippy',
+    'GroupBox', 'HBox', 'IFrame', 'Image', 'Key', 'KeySet', 'Label',
+    'ListBox', 'ListCell', 'ListCol', 'ListCols', 'ListHead',
+    'ListHeader', 'ListItem', 'Member', 'Menu', 'MenuBar', 'MenuItem',
+    'MenuList', 'MenuPopup', 'MenuSeparator', 'Observes', 'Overlay',
+    'Page', 'Popup', 'PopupSet', 'ProgressMeter', 'Radio', 'RadioGroup',
+    'Resizer', 'Row', 'Rows', 'Rule', 'Script', 'Scrollbar', 'Scrollbox',
+    'Separator', 'Spacer', 'Splitter', 'Stack', 'StatusBar',
+    'StatusBarPanel', 'StringBundle', 'StringBundleSet', 'Tab',
+    'TabBrowser', 'TabBox', 'TabPanel', 'TabPanels', 'Tabs', 'Template',
+    'TextNode', 'TextBox', 'TitleBar', 'ToolBar', 'ToolBarButton',
+    'ToolBarGrippy', 'ToolBarItem', 'ToolBarPalette', 'ToolBarSeparator',
+    'ToolbarSet', 'ToolBarSpacer', 'ToolBarSpring', 'ToolBox', 'ToolTip',
+    'Tree', 'TreeCell', 'TreeChildren', 'TreeCol', 'TreeCols', 'TreeItem',
+    'TreeRow', 'TreeSeparator','Triple', 'VBox', 'Window', 'Wizard',
+    'WizardPage',
+    ]
 
 g = globals()
 
 for t in bigListOXulTags:
     if t not in g.keys():
         g[t] = type(t, (XULWidgetTemplate,), {'tag' : t.lower()})
+

@@ -1,20 +1,23 @@
 # DO NOT RUN THIS IT WILL ALLOW PEOPLE TO DESTROY YOUR COMPUTER
 
 from nufox import xul
-from nevow import livepage
 
 from twisted.manhole import service
 
+
 class Example(xul.XULPage):
+    
     def setup(self):
         self.ns = {}
         self.window = xul.Window(height=400, width=400, title="Manhole")
         v = xul.VBox(flex=1)
         self.inbox = xul.TextBox(id='codeInput', flex=1)
-        self.inbox.addHandler('onchange', self.codeSent,
-                     livepage.get('codeInput').value)
+        # XXX: Needs to be updated to use athena instead of livepage.
+##         self.inbox.addHandler('onchange', self.codeSent,
+##                      livepage.get('codeInput').value)
 
-        self.outbox = xul.TextBox(id='output', rows=10, flex=1, readonly='true')
+        self.outbox = xul.TextBox(
+            id='output', rows=10, flex=1, readonly='true')
         hb = xul.HBox()
         hb.append(xul.Label(value=">>>"))
         hb.append(self.inbox)

@@ -1,14 +1,19 @@
 """This module provides SVG support in the Nufox style.
-see http://www.w3.org/TR/SVG for a description, use of this
-module will require clients using firefox 1.5 +."""
 
-import xmlstan
-from xul import GenericWidget
+See http://www.w3.org/TR/SVG for a description. Use of this module
+will require clients using Firefox 1.5 +.
+"""
+
+from nufox import xmlstan
+from nufox.xul import GenericWidget
+
 
 svgns = xmlstan.TagNamespace('svg', 'http://www.w3.org/2000/svg')
 xlinkns = xmlstan.TagNamespace('xlink', 'http://www.w3.org/1999/xlink')
 
+
 class SVGWidgetTemplate(GenericWidget):
+    
     def __init__(self, **kwargs):
         if kwargs.has_key('id'):
             GenericWidget.__init__(self, kwargs['id'])
@@ -26,20 +31,25 @@ class SVGWidgetTemplate(GenericWidget):
                 self.kwargs[k.replace('_','-')] = v
         return getattr(svgns, self.tag)(**self.kwargs)
 
-bigListOSvgTags = ['a', 'altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate',
-'animateColor', 'animateMotion', 'animateTransform', 'circle', 'clipPath',
-'color-profile', 'cursor', 'definition-src', 'defs', 'desc', 'ellipse',
-'feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite',
-'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight',
-'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur',
-'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset',
-'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence',
-'filter', 'font', 'font-face', 'font-face-format', 'font-face-name',
-'font-face-src', 'font-face-uri', 'foreignObject', 'g', 'glyph', 'glyphRef',
-'hkern', 'image', 'line', 'linearGradient', 'marker', 'mask', 'metadata',
-'missing-glyph', 'mpath', 'path', 'pattern', 'polygon', 'polyline',
-'radialGradient', 'rect', 'script', 'set', 'stop', 'style', 'svg', 'switch',
-'symbol', 'text', 'textPath', 'title', 'tref', 'tspan', 'use', 'view', 'vkern']
+
+bigListOSvgTags = [
+    'a', 'altGlyph', 'altGlyphDef', 'altGlyphItem',
+    'animate', 'animateColor', 'animateMotion', 'animateTransform',
+    'circle', 'clipPath', 'color-profile', 'cursor', 'definition-src',
+    'defs', 'desc', 'ellipse', 'feBlend', 'feColorMatrix',
+    'feComponentTransfer', 'feComposite', 'feConvolveMatrix',
+    'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feFlood',
+    'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur',
+    'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset',
+    'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile',
+    'feTurbulence', 'filter', 'font', 'font-face', 'font-face-format',
+    'font-face-name', 'font-face-src', 'font-face-uri', 'foreignObject',
+    'g', 'glyph', 'glyphRef', 'hkern', 'image', 'line', 'linearGradient',
+    'marker', 'mask', 'metadata', 'missing-glyph', 'mpath', 'path',
+    'pattern', 'polygon', 'polyline', 'radialGradient', 'rect', 'script',
+    'set', 'stop', 'style', 'svg', 'switch', 'symbol', 'text', 'textPath',
+    'title', 'tref', 'tspan', 'use', 'view', 'vkern',
+    ]
 
 gl = globals()
 

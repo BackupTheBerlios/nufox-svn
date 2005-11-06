@@ -1,21 +1,32 @@
+"""Nufox deployment helpers."""
+
 import os
-from twisted.internet import defer, reactor, utils
-from twisted.application import internet, service
+
 from nevow import rend, appserver
+
+from twisted.application import internet, service
+from twisted.internet import defer, reactor, utils
+
 from nufox import xul
 
+
 class ResourceDispatcher(rend.Page):
-    addSlash=True
+    
+    addSlash = True
+    
     def getRoot(self, context):
         """override me to return the resource you want dispatched"""
+        
     def renderHTTP(self, context):
         d = defer.maybeDeferred(self.getRoot, context)
         d.addCallback(self._delegate, "renderHTTP", context)
         return d
+    
     def locateChild(self, context, segments):
         d = defer.maybeDeferred(self.getRoot, context)
         d.addCallback(self._delegate, "locateChild", context, segments)
         return d
+    
     def _delegate(self, root, funcname, *args):
         return getattr(root, funcname)(*args)
 
@@ -34,11 +45,13 @@ def NufoxSite(XULRootPage):
     return appserver.NevowSite(LivePageFactoryAsRootDispatcher(
         xul.XULLivePageFactory(XULRootPage)))
 
+
 def NufoxServer(serviceName, port, XULRootPage, **kwargs):
     application = service.Application(serviceName)
     ws = internet.TCPServer(port, NufoxSite(XULRootPage), **kwargs)
     ws.setServiceParent(application)
     return application
+
 
 def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
     """Use this to run a server with a single client on the same machine."""

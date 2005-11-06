@@ -1,5 +1,6 @@
 from nufox import xul
 
+
 class Example(xul.XULPage):
 
     def setup(self):

@@ -1,16 +1,19 @@
 """A stan with namespaces
 """      
 
-from nevow.stan import Tag, Proto
 from nevow import flat
 from nevow.flat import flatstan
+from nevow.stan import Tag, Proto
+
 
 class NSProto(Proto):
+    
     def __call__(self, *args, **kw):
         return NSTag(self)(*args, **kw)
 
 
 class NSTag(Tag):
+    
     def __call__(self, *args, **kw):
         for a in args:
             if isinstance(a, PrimaryNamespace):
@@ -56,12 +59,13 @@ class TagGenerator(object):
         
         if len(self.validTags) > 0 and name not in self.validTags:
             raise KeyError(
-                "%s is not a valid tag in the %s namespace." % (name,
-                                                                self.namespace))
+                "%s is not a valid tag in the %s namespace."
+                % (name, self.namespace))
         return self.tagFactory(self.makeTagName(name))
     
 
 class TagNamespace(TagGenerator):
+    
     tagFactory = NSProto
     
     def __init__(self, namespace, uri, *args, **kwargs):
@@ -77,16 +81,22 @@ flat.registerFlattener(lambda orig, ctx: orig.uri, TagNamespace)
 
 
 class PrimaryNamespace(TagNamespace):
+    
     tagFactory = NSProto
 
     def makeTagName(self, name):
         return name
+
         
 if __name__ == '__main__':
     from nevow.flat.ten import flatten
 
-    h = PrimaryNamespace('html', "http://www.w3.org/2002/06/xhtml2", singletons=('model', 'key'))
-    x = TagNamespace('xforms', "http://www.w3.org/2002/xforms", singletons=('model', 'key'))
+    h = PrimaryNamespace(
+        'html', "http://www.w3.org/2002/06/xhtml2",
+        singletons=('model', 'key'))
+    x = TagNamespace(
+        'xforms', "http://www.w3.org/2002/xforms",
+        singletons=('model', 'key'))
     
     a = h.html(x, h)[
             h.head[
