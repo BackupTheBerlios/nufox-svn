@@ -7,8 +7,6 @@ by using custom JavaScript on the XUL side.
 
 from nevow import livepage
 
-from twisted.internet.defer import Deferred
-
 from nufox import xul
 
 
@@ -155,7 +153,7 @@ class SimpleTree(CompositeTreeBase):
                 lambda id, e=event, s=self, *a: s.onWrappedEvent(e, id, *a),
                 *args)
         else:
-            self.tree.addHandler(event, handler, *js)
+            self.tree.addHandler(event, handler, *args)
 
     def onWrappedEvent(self, event, id, *args):
         self.wrappedHandlers[event](self.clientIDtoItem[id[0]], *args)

@@ -1,5 +1,5 @@
-from nevow import livepage
 from nufox import xul
+
 
 class Example(xul.XULPage):
 
@@ -11,7 +11,8 @@ class Example(xul.XULPage):
         shift_i = xul.Key(modifiers='alt', _key='I')
         shift_i.addHandler('oncommand', self.shift_i_pressed)
         self.ks.append(shift_i)
-        self.ks.append(xul.Key(keycode='VK_ESCAPE', oncommand='window.close();'))
+        self.ks.append(
+            xul.Key(keycode='VK_ESCAPE', oncommand='window.close();'))
         self.window.append(self.ks)
         self.label = xul.Label(value=self.counter) 
         v.append(xul.Label(value='Press "alt+i" to increment the number'))

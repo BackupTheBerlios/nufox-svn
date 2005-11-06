@@ -1,5 +1,3 @@
-from twisted.internet.defer import gatherResults
-
 from nufox import xul, composite
 
 

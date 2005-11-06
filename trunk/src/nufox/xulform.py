@@ -1,14 +1,5 @@
 """Support for traditional 'forms' in XUL."""
 
-import md5
-import time
-
-from nevow import livepage
-
-from twisted.internet import defer
-
-from nufox import xul
-
 
 class FieldAggregate(object):
     """I hold a list of fields and have a submitter widget (usually a

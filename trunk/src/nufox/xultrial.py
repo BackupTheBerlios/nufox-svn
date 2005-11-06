@@ -1,6 +1,5 @@
 """XUL-based unit test support."""
 
-from twisted.internet import reactor
 from twisted.trial import unittest
 
 from nufox import xul

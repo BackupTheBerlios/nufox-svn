@@ -1,5 +1,5 @@
-from nevow import livepage
 from nufox import xul
+
 
 class Example(xul.XULPage):
 

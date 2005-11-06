@@ -1,9 +1,10 @@
-from twisted.internet.defer import gatherResults, Deferred
+from twisted.internet.defer import gatherResults
 
-from nevow import livepage
-from nufox import xul, composite
+from nufox import composite, xul
+
 
 class Example(xul.XULPage):
+
 
     def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,
@@ -58,6 +59,7 @@ class Example(xul.XULPage):
         def _cbButtonDelete(result):
             self.people.remove(*result)
         self.tree.getSelection().addCallback(_cbButtonDelete)
+
 
 def log(r):
     print "LOGGING ",r

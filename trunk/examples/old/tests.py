@@ -11,7 +11,7 @@ class Example(xultrial.XULTest):
     def test_setAttr(self):
         print "RUNNING TEST 1"
         self.label.setAttr('value', 1)
-        a.fail()
+        A.fail()
 
     def test_foo(self):
         print "RUNNING TEST 2"

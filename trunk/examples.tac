@@ -1,6 +1,5 @@
 import os
 
-from twisted.internet import utils as tiutils
 from twisted.python import log, reflect, util
 
 from nufox import xul, deploy
