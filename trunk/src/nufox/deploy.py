@@ -53,9 +53,38 @@ def NufoxServer(serviceName, port, XULRootPage, **kwargs):
     return application
 
 
-def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
-    """Use this to run a server with a single client on the same machine."""
+# --------------------------------------------------------------------
+# Desktop app support.
 
+
+class DesktopPageFactory(xul.XULLivePageFactory):
+    """XULLivePageFactory that stops the reactor after its last child
+    factory ceases to exist."""
+    
+    firstPageRequested = False
+
+    def addClient(self, client):
+        # Keep track of the fact that at least one client has
+        # connected.
+        self.firstPageRequested = True
+        return xul.XULLivePageFactory.addClient(self, client)
+
+    def removeClient(self, clientID):
+        xul.XULLivePageFactory.removeClient(self, clientID)
+        if self.firstPageRequested and not self.clients:
+            # Last client has disconnected; stop reactor at next
+            # iteration.
+            from twisted.internet import reactor
+            reactor.callLater(0, reactor.stop)
+
+
+def NufoxDesktopApp(XULRootPage, port=None, interface=None, firefoxArgs=None):
+    """Use this to run a server with a single client on the same machine."""
+    if not interface:
+        interface = '127.0.0.1'
+    if not port:
+        port = 8090
+    # Start Firefox as a child process.
     def start():
         args = ['-chrome', 'http://127.0.0.1:8090']
         if firefoxArgs:
@@ -64,13 +93,14 @@ def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
             executable = 'C:/Program Files/Mozilla Firefox/firefox.exe'
         else:
             executable = '/usr/bin/firefox'
-        d = utils.getProcessOutput(executable, args, os.environ)
-        d.addCallback(stop)
-
-    def stop(r):
-        print "terminated:",r
-        reactor.stop()
-
+        utils.getProcessOutput(executable, args, os.environ)
     reactor.callLater(0, start)
-    return NufoxServer('NufoxDesktopApp', 8090, XULRootPage,
-                       interface="127.0.0.1")
+    # Create the application.  Because Firefox may return immediately
+    # if a Firefox process is already running, don't worry about when
+    # Firefox exits.
+    application = service.Application('NufoxDesktopApp')
+    site = appserver.NevowSite(LivePageFactoryAsRootDispatcher(
+        DesktopPageFactory(XULRootPage)))
+    ws = internet.TCPServer(port, site, interface=interface)
+    ws.setServiceParent(application)
+    return application
