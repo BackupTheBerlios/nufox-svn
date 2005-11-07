@@ -39,6 +39,7 @@ class Grid(xul.GenericWidget):
         grid.append(columns, rows)
         return grid
 
+
 class Player(xul.GenericWidget):
     """Helix/RealPlayer-based media player.
 
@@ -50,9 +51,9 @@ class Player(xul.GenericWidget):
             'src' : mediaURL,
             'width' : width,
             'height' : height,
-            'console' : 'one',
-            'controls' : 'ImageWindow',
-            'maintainaspect' : 'true' }
+            'console' : u'one',
+            'controls' : u'ImageWindow',
+            'maintainaspect' : u'true' }
         self.kwargs = newKwargs
 
     def play(self):
@@ -194,7 +195,7 @@ class NestedTree(CompositeTreeBase):
 
         th = xul.TreeCols()
         for label in headerLabels:
-            th.append(xul.TreeCol(flex=1, label=label, primary="true"))
+            th.append(xul.TreeCol(flex=1, label=label, primary=u"true"))
         t.append(th)
 
         t.loaded = False
@@ -230,7 +231,7 @@ class NestedTree(CompositeTreeBase):
         if not node.loaded:
             children = self.abstraction.getChildren(node.segments)
             if len(children):
-                if node.alive: node.setAttr("open", "true")
+                if node.alive: node.setAttr("open", u"true")
 
                 if hasattr(node, "treeChildrenNode"):
                     tc = node.treeChildrenNode
@@ -238,8 +239,8 @@ class NestedTree(CompositeTreeBase):
                     tc = xul.TreeChildren()
 
                 for (path, empty, colLabels) in children:
-                    ti = xul.TreeItem(container="true",
-                        open="false", empty=empty)
+                    ti = xul.TreeItem(container=u"true",
+                        open=u"false", empty=empty)
                     tr = xul.TreeRow()
                     for label in colLabels:
                         tr.append(xul.TreeCell(label=label))
