@@ -123,7 +123,6 @@ class SimpleTree(CompositeTreeBase):
     def _addChildren(self, *items):
         for item in items:
             rowLabels = self.mapper(item)
-            print rowLabels
             ti = xul.TreeItem()
             self.clientIDtoItem[str(ti.id)] = item
             tr = xul.TreeRow()
