@@ -44,3 +44,24 @@ var NestedTreeLoadSubTree = function(tree, event, shouldBeTwist) {
         }
     }
 }
+
+
+var FlatTreeSetView = function(treeid, rowCount) {
+    var tree = document.getElementById(treeid);
+    var view = {
+        rowCount: rowCount,
+        getCellText: function(row, column) {
+            // XXX: call remote method on widget here.
+        },
+        setTree: function(treebox){ this.treebox = treebox; },
+        isContainer: function(row){ return false; },
+        isSeparator: function(row){ return false; },
+        isSorted: function(row){ return false; },
+        getLevel: function(row){ return 0; },
+        getImageSrc: function(row,col){ return null; },
+        getRowProperties: function(row,props){},
+        getCellProperties: function(row,col,props){},
+        getColumnProperties: function(colid,col,props){}
+    };
+    tree.view = view;
+}
