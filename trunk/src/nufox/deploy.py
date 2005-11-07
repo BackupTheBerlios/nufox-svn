@@ -60,7 +60,11 @@ def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
         args = ['-chrome', 'http://127.0.0.1:8090']
         if firefoxArgs:
             args.extend(firefoxArgs)
-        d = utils.getProcessOutput('/usr/bin/firefox', args, os.environ)
+        if os.name == 'nt':
+            executable = 'C:/Program Files/Mozilla Firefox/firefox.exe'
+        else:
+            executable = '/usr/bin/firefox'
+        d = utils.getProcessOutput(executable, args, os.environ)
         d.addCallback(stop)
 
     def stop(r):
@@ -70,5 +74,3 @@ def NufoxDesktopApp(XULRootPage, firefoxArgs=None):
     reactor.callLater(0, start)
     return NufoxServer('NufoxDesktopApp', 8090, XULRootPage,
                        interface="127.0.0.1")
-
-
