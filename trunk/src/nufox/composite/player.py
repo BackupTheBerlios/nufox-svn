@@ -3,6 +3,10 @@
 from nufox import xul
 
 
+# Register Javascript.
+xul.XULPage.globalJsIncludes.append('player.js')
+
+
 class Player(xul.GenericWidget):
     """Helix/RealPlayer-based media player.
 

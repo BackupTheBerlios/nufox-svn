@@ -3,6 +3,10 @@
 from nufox import xul
 
 
+# Register Javascript.
+xul.XULPage.globalJsIncludes.append('tree.js')
+
+
 class Base(xul.GenericWidget):
     """Base class for tree widgets."""
     

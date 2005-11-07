@@ -1,5 +1,7 @@
 """Nufox standard XUL classes and widgets."""
 
+import os
+
 from twisted.internet import defer
 from twisted.python.util import sibpath
 
@@ -69,9 +71,12 @@ class XULPage(athena.LivePage):
     css = None
     jsIncludes = []
     cssIncludes = []
+    globalJsIncludes = []
     addSlash = True
     constrainDimensions = False
     child_javascript = static.File(sibpath(__file__, 'javascript'))
+    child_js_composite = static.File(os.path.join(
+        sibpath(__file__, 'composite'), 'javascript'))
     charset = "UTF-8"
     glueInstalled = False
 
@@ -152,6 +157,11 @@ class XULPage(athena.LivePage):
             self.applyJsCode(self.js)
             for URL in self.jsIncludes:
                 self.applyJsUrl(URL)
+            # Apply globally-registered glue that resulted from
+            # importing a module from the nufox.composite package.
+            for filename in self.globalJsIncludes:
+                self.applyJsUrl(
+                    url.here.child('js_composite').child(filename))
             # Required glue is at the top of the chain.
             self.applyJsUrl(
                 url.here.child('javascript').child('postLiveglue.js'))

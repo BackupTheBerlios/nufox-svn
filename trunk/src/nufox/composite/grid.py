@@ -3,6 +3,10 @@
 from nufox import xul
 
 
+# Register Javascript.
+xul.XULPage.globalJsIncludes.append('grid.js')
+
+
 class Grid(xul.GenericWidget):
     """Render a list of lists of XUL widgets into a grid.
 

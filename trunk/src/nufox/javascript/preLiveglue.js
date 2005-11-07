@@ -1,4 +1,6 @@
-/* BEGIN Core functions for nufox */
+// Core functions for nufox, required to be loaded before liveglue
+// functions are loaded.
+
 
 var rCall = function(element, event) {
 
@@ -35,6 +37,7 @@ var rCall = function(element, event) {
     return d;
 }
 
+
 var addNode = function(parentId, element, attrs) {
     var w = document.createElement(element);
     for(var key in attrs) {
@@ -42,6 +45,7 @@ var addNode = function(parentId, element, attrs) {
     }
     document.getElementById(parentId).appendChild(w);
 }
+
 
 var appendNodes = function(newNodesList) {
     for(var n in newNodesList) {
@@ -51,17 +55,20 @@ var appendNodes = function(newNodesList) {
     return true;
 }
 
+
 var remove = function(parentId, childId) {
     /* Remove node with 'childId' from node with 'parentId'. */
     document.getElementById(parentId).removeChild(
         document.getElementById(childId));
 }
 
+
 var removeNodes = function(parentId, nodesToRemove) {
     for(var n in nodesToRemove) {
         remove(parentId, nodesToRemove[n]);
     }
 }
+
 
 var setAttr = function(id, attr, value) {
     /* Set attribute 'attr' on node with 'id' to 'value'.
@@ -73,10 +80,12 @@ var setAttr = function(id, attr, value) {
     return true;
 }
 
+
 var callMethod = function(id, method, args) {
     var node = document.getElementById(id);
     return node.getAttribute(method).apply(node, args);
 }
+
 
 var getAttr = function(id, attr) {
     var node = document.getElementById(id);
@@ -84,24 +93,23 @@ var getAttr = function(id, attr) {
     return node[attr];
 }
 
+
 var err = function(error) {
     alert("Error: " + error);
 }
+
 
 var newWindow = function(url) {
     //window.open(url, null, 'width=300, height=300');
     window.open(url, null);
 }
 
+
 var setWindowTitle = function(title) {
     document.title = title;
 }
 
+
 var resizeWindow = function(width, height) {
     window.resizeTo(width, height);
 }
-/* END Core functions for nufox */
-
-
-
-
