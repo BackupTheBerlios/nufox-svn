@@ -1,75 +1,9 @@
-"""Nufox composite widgets.
-
-Composite widgets manage collections of XUL elements for you. They
-expose higher-level methods on the Python side, and reduce round trips
-by using custom JavaScript on the XUL side.
-"""
-
-from nevow import livepage
+"""Nufox tree widgets."""
 
 from nufox import xul
 
 
-class Grid(xul.GenericWidget):
-    """Render a list of lists of XUL widgets into a grid.
-
-    The grid is length of list by length of the longest list. Shorter
-    lists will be padded with xul.Spacer() widgets.
-    """
-
-    def __init__(self, l):
-        xul.GenericWidget.__init__(self)
-        self.data = l
-        self.width = 0
-        for l in self.data:
-            if len(l) > self.width:
-                self.width = len(l)
-
-    def getTag(self):
-        grid = xul.Grid()
-        columns = xul.Columns()
-        rows = xul.Rows()
-        for i in range(self.width):
-            columns.append(xul.Column())
-        for l in self.data:
-            if len(l) < self.width:
-                for i in range(self.width - len(l)):
-                    l.append(xul.Spacer())
-            rows.append(xul.Row().append(*l))
-        grid.append(columns, rows)
-        return grid
-
-
-class Player(xul.GenericWidget):
-    """Helix/RealPlayer-based media player.
-
-    Requires Helix or RealPlayer plugin to be installed in Mozilla."""
-
-    def __init__(self, mediaURL, width=300, height=300):
-        xul.GenericWidget.__init__(self)
-        newKwargs = {
-            'src' : mediaURL,
-            'width' : width,
-            'height' : height,
-            'console' : u'one',
-            'controls' : u'ImageWindow',
-            'maintainaspect' : u'true' }
-        self.kwargs = newKwargs
-
-    def play(self):
-        self.pageCtx.client.send(livepage.js.PlayerPlay(str(self.id)))
-
-    def pause(self):
-        self.pageCtx.client.send(livepage.js.PlayerPause(str(self.id)))
-
-    def stop(self):
-        self.pageCtx.client.send(livepage.js.PlayerStop(str(self.id)))
-
-    def getTag(self):
-        return xul.htmlns.embed(**self.kwargs)
-
-
-class CompositeTreeBase(xul.GenericWidget):
+class Base(xul.GenericWidget):
     """Base class for tree widgets."""
     
     def __getattr__(self, name):
@@ -90,7 +24,7 @@ class CompositeTreeBase(xul.GenericWidget):
         raise AttributeError, name
 
 
-class SimpleTree(CompositeTreeBase):
+class Flat(Base):
     """Simple tree widget for a 1-tier list of items.
 
     @param headerLabels: a tuple of strings for the tree's
@@ -178,7 +112,7 @@ class SimpleTree(CompositeTreeBase):
         return d
 
 
-class NestedTree(CompositeTreeBase):
+class Nested(Base):
 
     def __init__(self, abstraction, headerLabels, **kwargs):
         self.abstraction = abstraction
@@ -208,8 +142,9 @@ class NestedTree(CompositeTreeBase):
     def addHandler(self, event, handler, *js):
         if event == "onselect":
             self._onSelectHandler = handler
-            js = [livepage.js.TreeGetSelected(self.tree.id)] + list(js)
-            self.tree.addHandler("onselect", self.onSelect, *js)
+            # XXX: Update to use athena.
+##             js = [livepage.js.TreeGetSelected(self.tree.id)] + list(js)
+##             self.tree.addHandler("onselect", self.onSelect, *js)
 
     def _getTreeItem(self, segments):
         node = self.tree
@@ -220,11 +155,12 @@ class NestedTree(CompositeTreeBase):
 
     def selectBranch(self, segments):
         client = self.pageCtx.client
-        if not len(segments):
-            client.send(livepage.js.TreeSelectionClear(self.tree.id))
-        else:
-            node = self._getTreeItem(segments)
-            client.send(livepage.js.TreeSelectionSet(self.tree.id, node.id))
+        # XXX: Update to use athena.
+##         if not len(segments):
+##             client.send(livepage.js.TreeSelectionClear(self.tree.id))
+##         else:
+##             node = self._getTreeItem(segments)
+##             client.send(livepage.js.TreeSelectionSet(self.tree.id, node.id))
 
     def loadNode(self, node):
         if not node.loaded:

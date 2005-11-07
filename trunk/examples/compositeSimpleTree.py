@@ -1,4 +1,5 @@
-from nufox import xul, composite
+from nufox.composite import tree
+from nufox import xul
 
 
 class Person:
@@ -42,7 +43,7 @@ class Example(xul.XULPage):
         b.addHandler('oncommand', self.onRemove)
         v.append(b)
 
-        self.tree = composite.SimpleTree(
+        self.tree = tree.Flat(
             ("Name", "Age"),
             lambda x: (x.name, x.age),
             items=[
