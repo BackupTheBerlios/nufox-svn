@@ -75,8 +75,15 @@ class CompositeTreeBase(xul.GenericWidget):
         # Delegate most of genericwidget's interface to our tree
         # widget.
         if name in [
-            'children', 'id', 'pageCtx', 'rend',
-            'addHandler', 'handlers', 'getTag'
+            'addHandler',
+            'children',
+            'getTag',
+            'handlers',
+            'id',
+            'kwargs',
+            'pageCtx',
+            'rend',
+            'tag',
             ]:
             return getattr(self.tree, name)
         raise AttributeError, name
@@ -100,7 +107,7 @@ class SimpleTree(CompositeTreeBase):
         th = xul.TreeCols()
         for cell in headerLabels:
             th.append(xul.TreeCol(flex=1, label=cell))
-            th.append(xul.Splitter(_class="tree-splitter"))
+            th.append(xul.Splitter(_class=u"tree-splitter"))
         t.append(th)
         tc = xul.TreeChildren()
         t.append(tc)
