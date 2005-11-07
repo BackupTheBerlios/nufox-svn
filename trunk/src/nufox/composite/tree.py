@@ -123,10 +123,12 @@ class FlatView(Base):
     @param headerLabels: a tuple of strings for the tree's
     column headers.
 
+    @param rowCount: number of rows in the tree.
+
     @param kwargs: kwargs to configure the actual xul.Tree widget
     """
 
-    def __init__(self, headerLabels, **kwargs):
+    def __init__(self, headerLabels, rowCount, **kwargs):
         t = xul.Tree(**kwargs)
         th = xul.TreeCols()
         for cell in headerLabels:
@@ -142,7 +144,8 @@ class FlatView(Base):
         # Set up the view on the remote side.
         from twisted.internet import reactor
         reactor.callLater(
-            0, lambda : self.pageCtx.callRemote('FlatTreeSetView', t.id))
+            0, lambda : self.pageCtx.callRemote('FlatTreeSetView',
+                                                t.id, rowCount))
 
     def getCellText(self, row, col):
         """Return text for the given row and column.
