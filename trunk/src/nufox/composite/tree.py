@@ -1,5 +1,7 @@
 """Nufox tree widgets."""
 
+from twisted.internet.defer import Deferred
+
 from nufox import xul
 
 
@@ -59,23 +61,33 @@ class Flat(Base):
         if items: self.set(items)
 
     def _addChildren(self, *items):
+        mapper = self.mapper
+        to_append = []
         for item in items:
-            rowLabels = self.mapper(item)
+            rowLabels = mapper(item)
             ti = xul.TreeItem()
             self.clientIDtoItem[str(ti.id)] = item
             tr = xul.TreeRow()
             for label in rowLabels:
                 tr.append(xul.TreeCell(label=label))
             ti.append(tr)
-            self.treeChildren.liveAppend(ti)
+            to_append.append(ti)
+        return self.treeChildren.liveAppend(*to_append)
 
     def set(self, items):
-        self.treeChildren.clear()
-        self.clientIDtoItem = {}
-        self._addChildren(*items)
+        """Reset the tree children, and return a deferred that calls
+        back when the last item in `items` is appended to the tree."""
+        d = self.treeChildren.clear()
+        def done(result):
+            self.clientIDtoItem = {}
+            return self._addChildren(*items)
+        d.addCallback(done)
+        return d
 
     def append(self, *items):
-        self._addChildren(*items)
+        """Return a deferred that calls back when the last item in
+        `items` is appended to the tree."""
+        return self._addChildren(*items)
 
     def remove(self, items):
         childrenToDelete = []
@@ -116,81 +128,45 @@ class Flat(Base):
         return d
 
 
-class FlatView(Base):
-    """Tree widget for a 1-tier list of items that loads data on
-    demand.
+# XXX: Not yet working:
 
-    @param headerLabels: a tuple of strings for the tree's
-    column headers.
+## class FlatView(Base):
+##     """Tree widget for a 1-tier list of items that loads data on
+##     demand.
 
-    @param rowCount: number of rows in the tree.
+##     @param headerLabels: a tuple of strings for the tree's
+##     column headers.
 
-    @param kwargs: kwargs to configure the actual xul.Tree widget
-    """
+##     @param rowCount: number of rows in the tree.
 
-    def __init__(self, headerLabels, rowCount, **kwargs):
-        t = xul.Tree(**kwargs)
-        th = xul.TreeCols()
-        for cell in headerLabels:
-            th.append(xul.TreeCol(flex=1, label=cell))
-            th.append(xul.Splitter(_class=u"tree-splitter"))
-        t.append(th)
-        tc = xul.TreeChildren()
-        t.append(tc)
-        self.tree = t
-        self.treeChildren = tc
-        self.clientIDtoItem = {}
-        self.wrappedHandlers = {}
-        # Set up the view on the remote side.
-        from twisted.internet import reactor
-        reactor.callLater(
-            0, lambda : self.pageCtx.callRemote('FlatTreeSetView',
-                                                t.id, rowCount))
+##     @param kwargs: kwargs to configure the actual xul.Tree widget
+##     """
 
-    def getCellText(self, row, col):
-        """Return text for the given row and column.
+##     def __init__(self, headerLabels, rowCount, **kwargs):
+##         t = xul.Tree(**kwargs)
+##         th = xul.TreeCols()
+##         for cell in headerLabels:
+##             th.append(xul.TreeCol(flex=1, label=cell))
+##             th.append(xul.Splitter(_class=u"tree-splitter"))
+##         t.append(th)
+##         tc = xul.TreeChildren()
+##         t.append(tc)
+##         self.tree = t
+##         self.treeChildren = tc
+##         self.clientIDtoItem = {}
+##         self.wrappedHandlers = {}
+##         # Set up the view on the remote side.
+##         from twisted.internet import reactor
+##         reactor.callLater(
+##             0, lambda : self.pageCtx.callRemote('FlatTreeSetView',
+##                                                 t.id, rowCount))
 
-        Override this in your FlatView subclass.
-        """
-        return u''
+##     def remote_getCellText(self, row, col):
+##         """Return text for the given row and column.
 
-##     def _addChildren(self, *items):
-##         for item in items:
-##             rowLabels = self.mapper(item)
-##             ti = xul.TreeItem()
-##             self.clientIDtoItem[str(ti.id)] = item
-##             tr = xul.TreeRow()
-##             for label in rowLabels:
-##                 tr.append(xul.TreeCell(label=label))
-##             ti.append(tr)
-##             self.treeChildren.liveAppend(ti)
-
-##     def addHandler(self, event, handler, *args):
-##         if event in ["ondblclick", "onselect"]:
-##             self.wrappedHandlers[event] = handler
-##             args = [
-##                 xul.requestFunction("TreeGetSelected", self.tree.id)
-##             ] + list(args)
-##             self.tree.addHandler(event,
-##                 lambda id, e=event, s=self, *a: s.onWrappedEvent(e, id, *a),
-##                 *args)
-##         else:
-##             self.tree.addHandler(event, handler, *args)
-
-##     def onWrappedEvent(self, event, id, *args):
-##         self.wrappedHandlers[event](self.clientIDtoItem[id[0]], *args)
-
-##     def idsToItems(self, ids):
-##         return [self.clientIDtoItem[id] for id in ids]
-
-##     def getSelection(self):
-##         def _cbTreeGetSelection(result):
-##             ids = result[0][0]
-##             if not ids: return []
-##             return self.idsToItems(ids)
-##         d = self.pageCtx.callRemote("TreeGetSelected", self.tree.id)
-##         d.addCallback(_cbTreeGetSelection)
-##         return d
+##         Override this in your FlatView subclass.
+##         """
+##         return u''
 
 
 class Nested(Base):

@@ -87,6 +87,17 @@ var callMethod = function(id, method, args) {
 }
 
 
+var widgetMethod = function(id, methodName /*, ... */) {
+    var args = [id, methodName];
+    for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+    }
+    d = server.callRemote.apply(server, args);
+    d.addErrback(err);
+    return d;
+}
+
+
 var getAttr = function(id, attr) {
     var node = document.getElementById(id);
     if(node[attr]==undefined) return node.getAttribute(attr);

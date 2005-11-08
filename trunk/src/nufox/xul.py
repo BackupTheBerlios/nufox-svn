@@ -95,27 +95,39 @@ class XULPage(athena.LivePage):
                                       self.window.kwargs.get('width'))
 
     def _initWidgets(self, widget):
-        """Recurse through the widgets children and set self as pageCtx, also
-        take any handlers they have defined and assign them to self.handlers
-        for use later in locateHandler."""
-        if not hasattr(self, 'handlers'):
-            self.handlers = {}
+        """Set `pageCtx` of `widget` and its children to this page,
+        and keep track of them for the purposes of handlers and remote
+        method invocation."""
+        # Create self.widgets if necessary.
+        id_widget = self.id_widget = getattr(self, 'id_widget', {})
+        # Process the current widget.
         if isinstance(widget, GenericWidget) and widget.pageCtx is None:
-            #assign self as pageCtx to the widget
+            # Assign this page to the `pageCtx` attribute on the
+            # widget.
             widget.pageCtx = self
-            #add all the handlers from the widget to our list of handlers
-            self.handlers[str(widget.id)] = widget.handlers
+            # Keep track of widget ID to widget mappings, for handlers
+            # and remote method invocations.
+            id_widget[str(widget.id)] = widget
             for child in widget.children:
                 self._initWidgets(child)
-        else:
-            print "ALREADY BEEN HERE!", widget
 
     def locateMethod(self, ctx, methodName):
         if methodName.startswith('__'):
             fud, widgetID, event = methodName.split('__')
             return lambda ctx, methodName, *args: (
-                self.handlers[widgetID][event][0](*args))
+                self.id_widget[widgetID].handlers[event][0](*args))
         return athena.LivePage.locateMethod(self, ctx, methodName)
+
+    def remote_widgetMethod(self, widgetId, methodName, *args):
+        widget = self.id_widget[str(widgetId)]
+        def methodNotFound(*args):
+            raise NameError(
+                'Method %s on %r not found.' % (methodName, widget))
+        return getattr(
+            self.id_widget[str(widgetId)],
+            'remote_%s' % methodName,
+            notfound,
+            )(*args)
 
     def renderHTTP(self, ctx):
         # Call user-defined setup, so self.window becomes available.
@@ -276,7 +288,7 @@ class GenericWidget(object):
 
     def clear(self):
         """Remove all widgets under this one."""
-        self.remove(*self.children)
+        return self.remove(*self.children)
 
     def getChild(self, id):
         matches = [child for child in self.children
