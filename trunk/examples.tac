@@ -97,7 +97,7 @@ class NufoxExamples(xul.XULPage):
         self.linkBox.append(docs, website)
         self.linkBox.addHandler('onselect', self.linkClicked)
 
-        for (modID, example) in self.liveChildren.items():
+        for (modID, example) in sorted(self.liveChildren.items()):
             ttID = 'tt_%s' % (modID,)
             puID = 'pu_%s' % (modID,)
             li = xul.ListItem(label=splitNerdyCaps(modID), value='0',
