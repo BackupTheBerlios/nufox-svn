@@ -1,4 +1,4 @@
-"""Contributed by Lukeg"""
+"""Contributed by Salvatore Didio"""
 
 from nufox import xul
 
