@@ -105,57 +105,45 @@ class Example(xul.XULPage):
             groupbox.append(xul.HBox(align=align).append(
                 xul.Button(label=u'Here',
                            image='images/betty_boop.xbm',
-                           orient='vertical'),
+                           orient='vertical'
+                           ),
                 xul.Button(orient='vertical',
                            ).append(xul.Label(value=u'the'),
                                     xul.Label(value=u'alignment')),
                 xul.Button(label=u'is', image='images/betty_boop.xbm'),
                 xul.Button(label=align),
                 ))
-        
-
-"""
-
- <groupbox orient="horizontal">
-  <caption label="equality" />
-  <vbox equalsize="always">
-    <button label="Here" image="images/betty_boop.xbm" orient="vertical" />
-    <button orient="vertical">
-       <label value="the" />
-       <label value="equalsize" />
-       <label value="attribute" />
-    </button>
-    <button label="is" image="images/betty_boop.xbm" />
-    <button label="always" />
-  </vbox>
-  <vbox equalsize="never">
-    <button label="Here" image="images/betty_boop.xbm" orient="vertical" />
-    <button orient="vertical">
-       <label value="the" />
-       <label value="equalsize" />
-       <label value="attribute" />
-    </button>
-    <button label="is" image="images/betty_boop.xbm" />
-    <button label="never" />
-  </vbox>
- </groupbox>
-
-
- <groupbox>
-  <caption label="hiddeness" />
-  <hbox>
-    <label value="Every other button in the line below is hidden" />
-  </hbox>
-  <hbox>
-    <button label="Every" />
-    <button label="other" hidden="true" />
-    <button label="button" />
-    <button label="in" hidden="true" />
-    <button label="the" />
-    <button label="line" hidden="true" />
-    <button label="below" />
-    <button label="is" hidden="true" />
-    <button label="hidden" />
-  </hbox>
- </groupbox>
-"""
+        # Equality.
+        groupbox = xul.GroupBox().append(xul.Caption(label=u'Equality'))
+        vbox.append(groupbox)
+        hbox = xul.HBox()
+        groupbox.append(hbox)
+        for equalsize in [u'always', u'never']:
+            hbox.append(xul.VBox(equalsize=equalsize).append(
+                xul.Button(label=u'Here',
+                           image='images/betty_boop.xbm',
+                           orient=u'vertical'
+                           ),
+                xul.Button(orient=u'vertical',
+                           ).append(xul.Label(value=u'the'),
+                                    xul.Label(value=u'equalsize'),
+                                    xul.Label(value=u'attribute')),
+                xul.Button(label=u'is', image='images/betty_boop.xbm'),
+                xul.Button(label=equalsize),
+                ))
+        # Hiddenness.
+        groupbox = xul.GroupBox().append(xul.Caption(label=u'Hiddenness'))
+        vbox.append(groupbox)
+        groupbox.append(xul.HBox().append(xul.Label(
+            value=u'Every other button in the line below is hidden.')))
+        groupbox.append(xul.HBox().append(
+            xul.Button(label=u'Every'),
+            xul.Button(label=u'other', hidden=u'true'),
+            xul.Button(label=u'button'),
+            xul.Button(label=u'in', hidden=u'true'),
+            xul.Button(label=u'the'),
+            xul.Button(label=u'line', hidden=u'true'),
+            xul.Button(label=u'below'),
+            xul.Button(label=u'is', hidden=u'true'),
+            xul.Button(label=u'hidden'),
+            ))
