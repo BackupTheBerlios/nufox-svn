@@ -1,5 +1,3 @@
-"""Contributed by Alagu Madhu"""
-
 from nufox import xul
 from nufox import xulform
 
@@ -82,6 +80,11 @@ class LoginGUI(xul.XULPage):
 
 
 class Example(LoginGUI):
+    """Login GUI"""
+
+    discussion = """
+    Contributed by Alagu Madhu.
+    """
 
     def setup(self):
         LoginGUI.setup(self)
@@ -92,4 +95,5 @@ class Example(LoginGUI):
 
     def onLogin(self, *args):
         print u"Got username: %r, password: %r" % args
+
 

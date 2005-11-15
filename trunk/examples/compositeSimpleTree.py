@@ -14,6 +14,7 @@ class Person:
 
 
 class Example(xul.XULPage):
+    """Composite Simple Tree"""
 
     def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,

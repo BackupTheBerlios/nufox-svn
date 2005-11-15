@@ -1,5 +1,3 @@
-"""Contributed by Salvatore Didio"""
-
 from nufox import xul
 
 style_titre = "text-align:center;color:#000000;font-size:1.5em;\
@@ -18,6 +16,12 @@ def sortLists(listes,critere=0):
 
 
 class Example(xul.XULPage):
+    """Sorted Columns"""
+
+    discussion = """
+    Contributed by Salvatore Didio.
+    """
+    
     def setup(self):
         self.window = xul.Window(height=400, width=400, title="Sorted Columns")
         label = xul.Label(value ="Sorting Columns",style=style_titre)

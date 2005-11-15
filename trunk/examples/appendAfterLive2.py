@@ -4,6 +4,10 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
+    """Append After Live 2
+
+    Appends nodes after going live.
+    """
 
     def setup(self):
         self.window = xul.Window(id="xul-window", height=400, width=400,

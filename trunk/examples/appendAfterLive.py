@@ -2,6 +2,10 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
+    """Append After Live
+
+    Appends nodes after going live.
+    """
 
     def setup(self):
         self.counter = 0

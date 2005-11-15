@@ -9,6 +9,11 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
+    """Nested Tree"""
+
+    discussion = """
+    Contributed by Lukeg.
+    """
 
     def setup(self):
         self.window = xul.Window()

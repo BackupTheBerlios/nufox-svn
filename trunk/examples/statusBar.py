@@ -1,5 +1,3 @@
-"""Contributed by Alagu Madhu"""
-
 from nufox import xul
 
 
@@ -11,6 +9,11 @@ TEXT = (
 
 
 class Example(xul.XULPage):
+    """Status Bar"""
+
+    discussion = """
+    Contributed by Alagu Madhu.
+    """
     
     def setup(self):
         self.window = xul.Window(

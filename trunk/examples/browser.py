@@ -2,6 +2,7 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
+    """Browser Embedding"""
 
     def setup(self):
         self.window = xul.Window()

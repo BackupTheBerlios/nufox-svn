@@ -2,9 +2,10 @@ from nufox import xul, xulform
 
 
 class Example(xul.XULPage):
-    """This example shows how the xulfom.FieldAggregate class can be
-    used to simplify submitting multiple fields with a single submit.
-    """
+    """Basic Form
+
+    Shows how the nufox.xulform.FieldAggregate class can be used to
+    simplify submitting multiple fields with a single submit."""
     
     def setup(self):
         self.window = xul.Window(title="Forms Test")

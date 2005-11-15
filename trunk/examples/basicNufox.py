@@ -2,6 +2,7 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
+    """Basic nufox"""
 
     def setup(self):
         self.counter = 0

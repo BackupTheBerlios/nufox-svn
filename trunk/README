@@ -4,7 +4,7 @@ licence: LGPL, (c) contributors
 
 depends: 
     Python 2.4.2+       http://python.org
-    twisted 2.1.0+      http://twistedmatrix.com 
+    twisted 2.1.0       http://twistedmatrix.com 
     Nevow 0.6.0         http://divmod.org/projects/nevow
 
 To run the examples:
