@@ -86,30 +86,45 @@ class XULPage(athena.LivePage):
         self._initWidgets(self.window)
 
     def goingLive(self, ctx):
-        #some hacks for in-browser apps
+        athena.LivePage.goingLive(self, ctx)
+        # Some hacks for in-browser apps.
         if 'title' in self.window.kwargs:
             self.window.setTitle(self.window.kwargs['title'])
-
         if self.constrainDimensions:
             self.window.setDimensions(self.window.kwargs.get('height'),
                                       self.window.kwargs.get('width'))
+        # Perform post-livepage stuff.
+        self._initWidgets(self.window, 'setupLive')
 
-    def _initWidgets(self, widget):
+    def _initWidgets(self, widget, methodName=None):
         """Set `pageCtx` of `widget` and its children to this page,
         and keep track of them for the purposes of handlers and remote
-        method invocation."""
-        # Create self.widgets if necessary.
-        id_widget = self.id_widget = getattr(self, 'id_widget', {})
-        # Process the current widget.
-        if isinstance(widget, GenericWidget) and widget.pageCtx is None:
-            # Assign this page to the `pageCtx` attribute on the
-            # widget.
-            widget.pageCtx = self
-            # Keep track of widget ID to widget mappings, for handlers
-            # and remote method invocations.
-            id_widget[str(widget.id)] = widget
+        method invocation.
+
+        If `methodName` is specified, it will call an optional method
+        of that name on each widget instead of the default behavior.
+        """
+        if not methodName:
+            # Create self.widgets if necessary.
+            id_widget = self.id_widget = getattr(self, 'id_widget', {})
+            # Process the current widget.
+            if isinstance(widget, GenericWidget) and widget.pageCtx is None:
+                # Assign this page to the `pageCtx` attribute on the
+                # widget.
+                widget.pageCtx = self
+                # Keep track of widget ID to widget mappings, for handlers
+                # and remote method invocations.
+                id_widget[str(widget.id)] = widget
+                for child in widget.children:
+                    self._initWidgets(child)
+        else:
+            # Call an optional method on each widget.
+            from twisted.internet import reactor
+            method = getattr(widget, methodName, None)
+            if method is not None:
+                reactor.callLater(0, method)
             for child in widget.children:
-                self._initWidgets(child)
+                self._initWidgets(child, methodName)
 
     def locateMethod(self, ctx, methodName):
         if methodName.startswith('__'):
@@ -218,9 +233,14 @@ class GenericWidget(object):
         self.handlers = {}
         self.pageCtx = None
         if ID is None:
-            self.id = abs(id(self))
-        else:
+            id_self = id(self)
+            # Ensure uniqueness even when negative.
+            ID = str(abs(id_self))
+            if id_self < 0:
+                ID += u'n'
             self.id = ID
+        else:
+            self.id = str(ID)
         self.alive = False
 
     def _append(self, *widgets):
