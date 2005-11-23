@@ -83,10 +83,10 @@ def NufoxDesktopApp(XULRootPage, port=None, interface=None, firefoxArgs=None):
     if not interface:
         interface = '127.0.0.1'
     if not port:
-        port = 8090
+        port = 0
     # Start Firefox as a child process.
-    def start():
-        args = ['-chrome', 'http://127.0.0.1:8090']
+    def start(service):
+        args = ['-chrome', 'http://127.0.0.1:%d' % ws._port.getHost().port]
         if firefoxArgs:
             args.extend(firefoxArgs)
         if os.name == 'nt':
@@ -94,13 +94,16 @@ def NufoxDesktopApp(XULRootPage, port=None, interface=None, firefoxArgs=None):
         else:
             executable = '/usr/bin/firefox'
         utils.getProcessOutput(executable, args, os.environ)
-    reactor.callLater(0, start)
     # Create the application.  Because Firefox may return immediately
     # if a Firefox process is already running, don't worry about when
     # Firefox exits.
     application = service.Application('NufoxDesktopApp')
     site = appserver.NevowSite(LivePageFactoryAsRootDispatcher(
         DesktopPageFactory(XULRootPage)))
+
     ws = internet.TCPServer(port, site, interface=interface)
+
+    reactor.callLater(0, start, ws)
+
     ws.setServiceParent(application)
     return application
