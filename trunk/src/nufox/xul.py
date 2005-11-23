@@ -235,12 +235,12 @@ class GenericWidget(object):
         if ID is None:
             id_self = id(self)
             # Ensure uniqueness even when negative.
-            ID = str(abs(id_self))
+            ID = unicode(abs(id_self))
             if id_self < 0:
                 ID += u'n'
             self.id = ID
         else:
-            self.id = str(ID)
+            self.id = unicode(ID)
         self.alive = False
 
     def _append(self, *widgets):
