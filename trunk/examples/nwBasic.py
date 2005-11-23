@@ -26,7 +26,6 @@ class Example(xul.XULPage):
         vbox.append(button, label, label2, label3)
         # Connect the `changed` signal from `label` directly to the
         # `setValue` method on `label3`.
-        print 'label3 is', label3
         label.connect(label.changed, label3.setValue)
 
     def on_button_clicked(self):

@@ -31,6 +31,8 @@ def requestFunction(func, *args):
 
 class XULLivePageFactory(athena.LivePageFactory):
     """LivePageFactory that stores child factory instances."""
+
+    noisy = False
     
     def __init__(self, *args, **kwargs):
         self.childFactories = {}
@@ -72,15 +74,21 @@ class XULPage(athena.LivePage):
     jsIncludes = []
     cssIncludes = []
     globalJsIncludes = []
+    widgetJsIncludes = []
     addSlash = True
     constrainDimensions = False
     child_javascript = static.File(sibpath(__file__, 'javascript'))
     child_js_composite = static.File(os.path.join(
         sibpath(__file__, 'composite'), 'javascript'))
+    child_js_widget = static.File(os.path.join(
+        sibpath(__file__, 'widget'), 'javascript'))
     charset = "UTF-8"
     glueInstalled = False
 
     liveChildren = {}
+
+    # Use a saner default idle timeout of one hour.
+    TRANSPORT_IDLE_TIMEOUT = 60 * 60
 
     def beforeRender(self, ctx):
         self._initWidgets(self.window)
@@ -96,7 +104,7 @@ class XULPage(athena.LivePage):
         # Perform post-livepage stuff.
         self._initWidgets(self.window, 'setupLive')
 
-    def _initWidgets(self, widget, methodName=None):
+    def _initWidgets(self, widget, methodName=None, parent=None):
         """Set `pageCtx` of `widget` and its children to this page,
         and keep track of them for the purposes of handlers and remote
         method invocation.
@@ -112,19 +120,22 @@ class XULPage(athena.LivePage):
                 # Assign this page to the `pageCtx` attribute on the
                 # widget.
                 widget.pageCtx = self
+                # Let the widget know its place in the hierarchy.
+                widget.parent = parent
                 # Keep track of widget ID to widget mappings, for handlers
                 # and remote method invocations.
-                id_widget[str(widget.id)] = widget
+                id_widget[unicode(widget.id)] = widget
                 for child in widget.children:
-                    self._initWidgets(child)
+                    self._initWidgets(child, parent=widget)
         else:
             # Call an optional method on each widget.
-            from twisted.internet import reactor
-            method = getattr(widget, methodName, None)
-            if method is not None:
-                reactor.callLater(0, method)
-            for child in widget.children:
-                self._initWidgets(child, methodName)
+            if isinstance(widget, GenericWidget):
+                from twisted.internet import reactor
+                method = getattr(widget, methodName, None)
+                if method is not None:
+                    reactor.callLater(0, method)
+                for child in widget.children:
+                    self._initWidgets(child, methodName)
 
     def locateMethod(self, ctx, methodName):
         if methodName.startswith('__'):
@@ -134,12 +145,12 @@ class XULPage(athena.LivePage):
         return athena.LivePage.locateMethod(self, ctx, methodName)
 
     def remote_widgetMethod(self, widgetId, methodName, *args):
-        widget = self.id_widget[str(widgetId)]
+        widget = self.id_widget[unicode(widgetId)]
         def methodNotFound(*args):
             raise NameError(
                 'Method %s on %r not found.' % (methodName, widget))
         return getattr(
-            self.id_widget[str(widgetId)],
+            self.id_widget[unicode(widgetId)],
             'remote_%s' % methodName,
             notfound,
             )(*args)
@@ -189,6 +200,11 @@ class XULPage(athena.LivePage):
             for filename in self.globalJsIncludes:
                 self.applyJsUrl(
                     url.here.child('js_composite').child(filename))
+            # Apply globally-registered glue that resulted from
+            # importing a module from the nufox.widget package.
+            for filename in self.widgetJsIncludes:
+                self.applyJsUrl(
+                    url.here.child('js_widget').child(filename))
             # Required glue is at the top of the chain.
             self.applyJsUrl(
                 url.here.child('javascript').child('postLiveglue.js'))
@@ -228,7 +244,10 @@ class XULPage(athena.LivePage):
 class GenericWidget(object):
     """I am the base class for all XUL elements."""
 
+    namespace = xulns
+
     def __init__(self, ID=None):
+        self.parent = None
         self.children = []
         self.handlers = {}
         self.pageCtx = None
@@ -243,13 +262,6 @@ class GenericWidget(object):
             self.id = unicode(ID)
         self.alive = False
 
-    def _append(self, *widgets):
-        for widget in widgets:
-            self.children.append(widget)
-            if self.pageCtx is not None:
-                self.pageCtx._initWidgets(widget)
-        return self
-
     def append(self, *widgets):
         """Use append when appending to widgets that are not live,
         returns self, this is mostly useful in self.setup() and in
@@ -258,6 +270,27 @@ class GenericWidget(object):
         if self.alive:
             raise RuntimeError("Use liveAppend to append to a live widget.")
         return self._append(*widgets)
+
+    def _append(self, *widgets):
+        for widget in widgets:
+            self.children.append(widget)
+            if self.pageCtx is not None:
+                self.pageCtx._initWidgets(widget, parent=self)
+        return self
+
+    def insert(self, before, *widgets):
+        if self.alive:
+            raise RuntimeError("Use liveInsert to insert to a live widget.")
+        return self._insert(before, *widgets)
+
+    def _insert(self, before, *widgets):
+        idx = self.children.index(before)
+        for widget in widgets:
+            self.children.insert(idx, widget)
+            if self.pageCtx is not None:
+                self.pageCtx._initWidgets(widget, parent=self)
+            idx += 1
+        return self
 
     def liveAppend(self, *widgets):
         """Use liveAppend when appending to widgets that are already
@@ -274,21 +307,69 @@ class GenericWidget(object):
                 for child in parent.children:
                     if getattr(child,'alive',False):
                         continue
-                    child.alive = True
-                    if isinstance(child, (xmlstan.NSTag, xmlstan.Tag)):
-                        pass
-                        #XXX FIXME this is BROKEN and needs fixing
-                        #raise NotImplementedError(
-                        #    "liveAppend anything but XUL widgets is broken! %r" % child )
-                        #newNodes.append((parent.id, child.tagName, child.attributes))
-                        #marshal(child)
+                    if isinstance(child, unicode):
+                        newNodes.append((parent.id, child))
                     else:
-                        newNodes.append((
-                            parent.id, child.tag.decode('ascii'), child.kwargs))
-                        marshal(child)
+                        child.alive = True
+                        if isinstance(child, (xmlstan.NSTag, xmlstan.Tag)):
+                            pass
+                            #XXX FIXME this is BROKEN and needs fixing
+                            #raise NotImplementedError(
+                            #    "liveAppend anything but XUL "
+                            #    "widgets is broken! %r" % child )
+                            #newNodes.append(
+                            #    (parent.id, child.tagName, child.attributes))
+                            #marshal(child)
+                        else:
+                            tag = child.tag.decode('ascii')
+                            if child.namespace is self.namespace:
+                                newNodes.append((
+                                    parent.id,
+                                    tag,
+                                    child.kwargs,
+                                    ))
+                            else:
+                                newNodes.append((
+                                    parent.id,
+                                    child.namespace.uri.decode('ascii'),
+                                    tag,
+                                    child.kwargs,
+                                    ))
+                            marshal(child)
             marshal(self)
             d = self.pageCtx.callRemote('appendNodes', newNodes)
-            d.addCallback(lambda r: self)
+            def returnSelf(result):
+                return self
+            d.addCallback(returnSelf)
+            return d
+
+    def liveInsert(self, before, *widgets):
+        if not self.alive:
+            return defer.succeed(self.insert(before, *widgets))
+        else:
+            beforeId = before.id
+            self._insert(before, *widgets)
+            newNodes = []
+            def marshal(parent):
+                for child in parent.children:
+                    if getattr(child, 'alive', False):
+                        continue
+                    child.alive = True
+                    if isinstance(child, (xmlstan.NSTag, xmlstan.Tag)):
+                        # XXX: fixme
+                        pass
+                    else:
+                        newNodes.append((
+                            parent.id,
+                            before.id,
+                            child.tag.decode('ascii'),
+                            child.kwargs))
+                        marshal(child)
+            marshal(self)
+            d = self.pageCtx.callRemote('insertNodes', newNodes)
+            def returnSelf(result):
+                return self
+            d.addCallback(returnSelf)
             return d
 
     def __getitem__(self, *widgets):
@@ -312,7 +393,7 @@ class GenericWidget(object):
 
     def getChild(self, id):
         matches = [child for child in self.children
-            if hasattr(child, 'id') and str(child.id) == str(id)]
+            if hasattr(child, 'id') and unicode(child.id) == unicode(id)]
         return len(matches) and matches[0] or None
 
     def rend(self, context):
@@ -320,8 +401,12 @@ class GenericWidget(object):
         return self.getTag()[self.children]
 
     def setAttr(self, attr, value):
-        return self.pageCtx.callRemote('setAttr', self.id,
-                                       attr.decode('ascii'), value)
+        if not self.alive:
+            self.kwargs[attr] = value
+            return defer.succeed(None)
+        else:
+            return self.pageCtx.callRemote('setAttr', self.id,
+                                           attr.decode('ascii'), value)
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
@@ -329,11 +414,15 @@ class GenericWidget(object):
 
     def getAttr(self, attr):
         """Get the value of a remote attribute."""
-        def _getAttr(result):
-            return result[0][0]
-        d = self.pageCtx.callRemote("getAttr", self.id, attr.decode('ascii'))
-        d.addCallback(_getAttr)
-        return d
+        if not self.alive:
+            return defer.succeed(self.kwargs.get(attr, u''))
+        else:
+            def _getAttr(result):
+                return result[0][0]
+            d = self.pageCtx.callRemote(
+                "getAttr", self.id, attr.decode('ascii'))
+            d.addCallback(_getAttr)
+            return d
 
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result
@@ -349,6 +438,7 @@ class GenericWidget(object):
         args = ["'%s'" % event] + [repr(a) for a in args]
         call = "rCall(this, %s)" % ", ".join(args)
         self.handlers[event] = (handler, call)
+        return self
 
 flat.registerFlattener(lambda orig, ctx: orig.rend(ctx), GenericWidget)
 
@@ -364,6 +454,7 @@ class Window(GenericWidget):
         else:
             GenericWidget.__init__(self)
         kwargs.update({'id' : self.id})
+        kwargs.setdefault('onload', u'server.callRemote("live");')
         self.kwargs = kwargs
         self.xmlNameSpaces = xmlNameSpaces
 
@@ -380,8 +471,8 @@ class Window(GenericWidget):
         width = width or self.kwargs.get('width')
         height = height or self.kwargs.get('height')
 
-        self.setAttr('height', height)
-        self.setAttr('width', width)
+        self.setAttr(u'height', height)
+        self.setAttr(u'width', width)
 #       self.pageCtx.client.send(
 #            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
         self.pageCtx.callRemote('resizeWindow', width, height)

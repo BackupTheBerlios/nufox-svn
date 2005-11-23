@@ -1,9 +1,9 @@
 from nufox import xul
 
-style_titre = "text-align:center;color:#000000;font-size:1.5em;\
+style_titre = u"text-align:center;color:#000000;font-size:1.5em;\
                font-weight:bold; border:1px dotted #000000;padding:15px;"
 
-L = [['Paul',24,3000],['Albert',45,2500],['Claude',18,4000]]
+L = [[u'Paul',24,3000],[u'Albert',45,2500],[u'Claude',18,4000]]
 
 
 def sortLists(listes,critere=0):
@@ -23,22 +23,23 @@ class Example(xul.XULPage):
     """
     
     def setup(self):
-        self.window = xul.Window(height=400, width=400, title="Sorted Columns")
-        label = xul.Label(value ="Sorting Columns",style=style_titre)
+        self.window = xul.Window(height=400, width=400,
+                                 title=u"Sorted Columns")
+        label = xul.Label(value =u"Sorting Columns",style=style_titre)
         grBox = xul.GroupBox(flex=1)
         tree = xul.Tree(
-            id="tree",
+            id=u"tree",
             flex=1,
-            seltpr='single',
-            hidecolumnpicker="false",
+            seltpr=u'single',
+            hidecolumnpicker=u"false",
             )
-        s = xul.Splitter(_class = "tree-splitter")
+        s = xul.Splitter(_class = u"tree-splitter")
         treecols = xul.TreeCols()
-        tname = xul.TreeCol(id = "name", flex = 1, label = "Name")
+        tname = xul.TreeCol(id = u"name", flex = 1, label = u"Name")
         tname.addHandler('onclick',self.sortName)
-        tage = xul.TreeCol(id = "age", flex = 1, label = "Age")
+        tage = xul.TreeCol(id = u"age", flex = 1, label = u"Age")
         tage.addHandler('onclick',self.sortAge)
-        tsal = xul.TreeCol(id = "sal", flex = 1, label = "Salary")
+        tsal = xul.TreeCol(id = u"sal", flex = 1, label = u"Salary")
         tsal.addHandler('onclick',self.sortSalary)
         treecols.append(tname,s,tage,s,tsal)
         self.treechild = xul.TreeChildren()

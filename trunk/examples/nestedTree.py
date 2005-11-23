@@ -9,7 +9,7 @@ from nufox import xul
 
 
 class Example(xul.XULPage):
-    """Nested Tree"""
+    """Nested Tree (debug me)"""
 
     discussion = """
     Contributed by Lukeg.
@@ -20,21 +20,22 @@ class Example(xul.XULPage):
         self.vbox = xul.VBox()
         self.tree = xul.Tree(flex=1, rows=10)
         self.tree.addHandler(
-            'onselect', self.click_row, self.tree.requestAttr('currentIndex'))
+            'onselect', self.click_row,
+            self.tree.requestAttr(u'currentIndex'))
         self.colonnes = xul.TreeCols(flex=1)
         self.cols_name = {
-            'Fichier': None,
-            'path': None,
-            'size': None,
+            u'Fichier': None,
+            u'path': None,
+            u'size': None,
             }
         self.cols_order = [
-            'Fichier',
-            'path',
-            'size',
+            u'Fichier',
+            u'path',
+            u'size',
             ]
         for col in self.cols_order:
             if col == self.cols_order[0]:
-                my_col = xul.TreeCol(label=col, flex=1, primary='true')
+                my_col = xul.TreeCol(label=col, flex=1, primary=u'true')
             else:
                 my_col = xul.TreeCol(label=col, flex=1)
             self.cols_name[col] = my_col
@@ -48,8 +49,8 @@ class Example(xul.XULPage):
         self.tree.append(self.colonnes)
         self.tree.append(self.tree_children)
         self.vbox.append(xul.GroupBox().append(self.tree))
-        self.label = xul.Label(value='no information')
-        self.caption= xul.Caption(label='File informations')
+        self.label = xul.Label(value=u'no information')
+        self.caption= xul.Caption(label=u'File informations')
         self.vbox.append(xul.GroupBox().append(self.caption, self.label))
         self.window.append(self.vbox)
 
@@ -109,12 +110,12 @@ class Example(xul.XULPage):
         def _change_text(txt):
             filepath = txt[0][0]
             if filepath == '':
-                txt = 'Directory'
+                txt = u'Directory'
             else:
-                cmd = 'file '+filepath
+                cmd = u'file '+filepath
                 fd = os.popen2(cmd)
                 txt = fd[1].read().strip()
-            self.label.setAttr('value',unicode(txt))
+            self.label.setAttr(u'value',unicode(txt))
         defer = self.callRemote('GetCellText', row[0][0][0], 1)
         defer.addCallback(_change_text)
 
@@ -130,10 +131,10 @@ class Example(xul.XULPage):
             item.append(tree_row)
         # It's a directory
         else:
-            item = xul.TreeItem(container='true')
+            item = xul.TreeItem(container=u'true')
             cell = xul.TreeCell(label=file_list[0])
-            cell2 = xul.TreeCell(label='')
-            cell3 =  xul.TreeCell(label='')
+            cell2 = xul.TreeCell(label=u'')
+            cell3 =  xul.TreeCell(label=u'')
             child = xul.TreeChildren()
             for i in file_list[1]:
                 my_item = self.create_tree_item(i)

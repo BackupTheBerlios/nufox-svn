@@ -3,9 +3,10 @@
 from nufox.widget import _dispatcher
 from nufox.widget._dispatcher import signal
 from nufox import xul
+from nufox.xul import xulns
 
 
-class Widget(xul.GenericWidget):
+class Widget(xul.XULWidgetTemplate):
     """Base class for all `nufox.widget` classes.
 
     Some basic tenets are described below.
@@ -147,14 +148,47 @@ class Widget(xul.GenericWidget):
     deferreds.
     """
 
+    # Override these in subclasses.
+    tag = None
+    namespace = xulns
+    xmlNamespaces = []
+    
+    def __init__(self, **kwargs):
+        self.preSetup(kwargs)
+        result = xul.XULWidgetTemplate.__init__(self, **kwargs)
+        self.setup()
+        return result
+
+    def preSetup(self, kwargs):
+        """Override this if necessary to manipulate kwargs in
+        subclasses during instantiation."""
+
+    def setup(self):
+        """Override this if necessary to manipulate widget during
+        instantiation."""
+
+    def adopt(self, node):
+        """Make `node` a child of this widget, and return `node`."""
+        self.append(node)
+        return node
+
     def connect(self, signal, callback):
+        """Connect the sending of `signal` by this widget to
+        `callback`."""
         _dispatcher.connect(callback, signal, self)
 
     def disconnect(self, signal, callback):
+        """Reverse of `connect`."""
         _dispatcher.disconnect(callback, signal, self)
 
     def dispatch(self, signal, *args):
+        """Dispatch `signal` with optional `args` to listeners."""
         _dispatcher.send(signal, self, *args)
+
+    def getTag(self):
+        self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
+        t = getattr(self.namespace, self.tag)
+        return t(*self.xmlNamespaces, **self.kwargs)
 
     
 class Signal(signal.Signal):

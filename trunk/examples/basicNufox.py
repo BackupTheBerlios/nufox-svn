@@ -6,12 +6,12 @@ class Example(xul.XULPage):
 
     def setup(self):
         self.counter = 0
-        self.window = xul.Window(id="xul-window", height=400, width=400,
-                                 title="Press this button!")
+        self.window = xul.Window(id=u"xul-window", height=400, width=400,
+                                 title=u"Press this button!")
         v = xul.VBox(flex=1)
-        b = xul.Button(label="A Button")
+        b = xul.Button(label=u"A Button")
         b.addHandler('oncommand', self.buttonPushed)
-        self.label = xul.Label(value='hello there')
+        self.label = xul.Label(value=u'hello there')
         v.append(b)
         v.append(self.label)
         self.window.append(v)
@@ -19,9 +19,9 @@ class Example(xul.XULPage):
     def buttonPushed(self, *args):
         print args
         self.counter += 1
-        self.label.setAttr('value',
+        self.label.setAttr(u'value',
             u'You have clicked %s times' % ( self.counter,))
-        d = self.label.getAttr('value')
+        d = self.label.getAttr(u'value')
         d.addBoth(log)
 
 

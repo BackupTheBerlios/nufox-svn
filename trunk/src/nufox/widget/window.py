@@ -5,19 +5,14 @@ from nufox.xul import xulns, htmlns
 
 
 class Window(Widget):
-    """Widget based on xul.Window."""
+    """Window."""
 
-    def __init__(self, title=u'', width=None, height=None,
-                 goLive='server.callRemote("live");'):
-        Widget.__init__(self)
-        self.kwargs = {
-            'id': self.id,
-            'height': height,
-            'title': title,
-            'width': width,
-            'onload': goLive,
-            }
-        self.xmlNameSpaces = []
+    tag = 'window'
+    xmlNamespaces = [xulns, htmlns]
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('onload', 'server.callRemote("live");')
+        Widget.__init__(self, **kwargs)
 
     def title(self):
         """title() -> deferred title of window"""
@@ -73,6 +68,3 @@ class Window(Widget):
                 ]).addCallback(returnDimensions)
         return d.addCallback(setXulAttributes)
 
-    def getTag(self):
-        self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
-        return xulns.window(xulns, htmlns, *self.xmlNameSpaces, **self.kwargs)

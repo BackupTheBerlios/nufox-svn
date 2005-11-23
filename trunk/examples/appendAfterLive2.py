@@ -10,23 +10,23 @@ class Example(xul.XULPage):
     """
 
     def setup(self):
-        self.window = xul.Window(id="xul-window", height=400, width=400,
-                                 title="XUL is Cool")
+        self.window = xul.Window(id=u"xul-window", height=400, width=400,
+                                 title=u"XUL is Cool")
         v = xul.GroupBox(flex=1)
         self.box = v
 
-        v.append(xul.Caption(label="Fun with Trees"))
+        v.append(xul.Caption(label=u"Fun with Trees"))
 
         hbox = xul.HBox()
-        hbox.append(xul.Label(value="Name:"))
-        self.nameTextBox = xul.TextBox(value='Henry')
+        hbox.append(xul.Label(value=u"Name:"))
+        self.nameTextBox = xul.TextBox(value=u'Henry')
         hbox.append(self.nameTextBox)
-        hbox.append(xul.Label(value="Age:"))
-        self.ageTextBox = xul.TextBox(value='43')
+        hbox.append(xul.Label(value=u"Age:"))
+        self.ageTextBox = xul.TextBox(value=u'43')
         hbox.append(self.ageTextBox)
         v.append(hbox)
 
-        b = xul.Button(label="The Give Me More Button")
+        b = xul.Button(label=u"The Give Me More Button")
         b.addHandler('oncommand', self.buttonPushed)
         v.append(b)
 
@@ -52,10 +52,10 @@ class Example(xul.XULPage):
             t.append(tc)
             return (t,tc)
 
-        t,tc = listToTree([("Name", "Age"),
-            ("ned", 23),
-            ("fred", 35),
-            ("ted", 52),])
+        t,tc = listToTree([(u"Name", u"Age"),
+            (u"ned", 23),
+            (u"fred", 35),
+            (u"ted", 52),])
 
         t.addHandler('onselect', self.treeSelect)
         v.append(t)
@@ -74,14 +74,14 @@ class Example(xul.XULPage):
         self.treeChildren.liveAppend(ti)
 
     def buttonPushed(self):
-        d1 = self.nameTextBox.getAttr('value')
-        d2 = self.ageTextBox.getAttr('value')
+        d1 = self.nameTextBox.getAttr(u'value')
+        d2 = self.ageTextBox.getAttr(u'value')
         dlist = gatherResults([d1, d2])
         dlist.addBoth(log)
         dlist.addCallback(self._cbButtonPushed)
 
     def treeSelect(self):
-        self.tree.getAttr('value').addBoth(log)
+        self.tree.getAttr(u'value').addBoth(log)
 
 
 def log(r):

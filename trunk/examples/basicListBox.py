@@ -6,10 +6,10 @@ class Example(xul.XULPage):
 
     def setup(self):
         self.counter = 0
-        self.window = xul.Window(id="xul-window", height=400, width=400,
-                                 title="XUL is Cool")
+        self.window = xul.Window(id=u"xul-window", height=400, width=400,
+                                 title=u"XUL is Cool")
         v = xul.GroupBox(flex=1)
-        v.append(xul.Caption(label="Fun"))
+        v.append(xul.Caption(label=u"Fun"))
 
         def listToListBox(list, haveHeader=False):
             lb = xul.ListBox(rows=len(list))
@@ -38,10 +38,10 @@ class Example(xul.XULPage):
                 lb.append(li)
             return lb
 
-        lb = listToListBox([("Name", "Age"),
-            ("ned", 23),
-            ("fred", 35),
-            ("ted", 52),], haveHeader=True)
+        lb = listToListBox([(u"Name", u"Age"),
+            (u"ned", 23),
+            (u"fred", 35),
+            (u"ted", 52),], haveHeader=True)
 
         lb.addHandler('onselect', self.listSelect)
         self.listBox = lb
@@ -50,7 +50,7 @@ class Example(xul.XULPage):
         self.window.append(v)
 
     def listSelect(self):
-        d = self.listBox.getAttr('value')
+        d = self.listBox.getAttr(u'value')
         d.addBoth(log)
 
 

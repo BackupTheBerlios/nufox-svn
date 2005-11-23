@@ -2,27 +2,27 @@ from nufox import xul, xulform
 
 
 class Example(xul.XULPage):
-    """Basic Form
+    """Basic Form (debug me)
 
     Shows how the nufox.xulform.FieldAggregate class can be used to
     simplify submitting multiple fields with a single submit."""
     
     def setup(self):
-        self.window = xul.Window(title="Forms Test")
+        self.window = xul.Window(title=u"Forms Test")
         #A place to display our form results
         self.display = xul.Label()
 
         #three fields:
-        firstname = xul.TextBox(id="firstname")
-        surname = xul.TextBox(id="surname")
-        age = xul.TextBox(id="age")
+        firstname = xul.TextBox(id=u"firstname")
+        surname = xul.TextBox(id=u"surname")
+        age = xul.TextBox(id=u"age")
         
         # a button to submit our form
-        submit = xul.Button(label="Submit Me")
+        submit = xul.Button(label=u"Submit Me")
         
         # a group box to put everything in
         gb = xul.GroupBox(flex=1).append(xul.Caption(
-            value="A handy-dandy form"))
+            value=u"A handy-dandy form"))
         
         #lay it all out in a nice grid:
         grid = xul.Grid().append(
@@ -32,15 +32,15 @@ class Example(xul.XULPage):
             ),
             xul.Rows().append(
                 xul.Row().append(
-                    xul.Label(value="Firstname"),
+                    xul.Label(value=u"Firstname"),
                     firstname
                 ),
             xul.Row().append(
-                    xul.Label(value="Surname"),
+                    xul.Label(value=u"Surname"),
                     surname
                 ),
             xul.Row().append(
-                    xul.Label(value="Age"),
+                    xul.Label(value=u"Age"),
                     age
                 )
             )
@@ -55,4 +55,4 @@ class Example(xul.XULPage):
         form.addHandler('oncommand', self.handleSubmit)
 
     def handleSubmit(self, *args):
-        self.display.setAttr('value', u"You submitted: %s %s %s" % args)
+        self.display.setAttr(u'value', u"You submitted: %s %s %s" % args)

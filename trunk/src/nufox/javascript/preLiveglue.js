@@ -47,14 +47,51 @@ var addNode = function(parentId, element, attrs) {
 }
 
 
+var addNodeNS = function(parentId, nsURI, element, attrs) {
+    var w = document.createElementNS(nsURI, element);
+    for(var key in attrs) {
+        w.setAttribute(key, attrs[key]);
+    }
+    document.getElementById(parentId).appendChild(w);
+}
+
+
+var addText = function(parentId, text) {
+    var p = document.getElementById(parentId);
+    var t = document.createTextNode(text);
+    p.appendChild(t);
+}
+
+
 var appendNodes = function(newNodesList) {
-    for(var n in newNodesList) {
+    for (var n in newNodesList) {
         var node = newNodesList[n];
-        addNode(node[0], node[1], node[2]);
+        switch (node.length) {
+            case 2: addText(node[0], node[1]); break;
+            case 3: addNode(node[0], node[1], node[2]); break;
+            case 4: addNodeNS(node[0], node[1], node[2], node[3]); break;
+        }
     }
     return true;
 }
 
+var insertNode = function(parentId, beforeId, element, attrs) {
+    var w = document.createElement(element);
+    for (var key in attrs) {
+        w.setAttribute(key, attrs[key]);
+    }
+    var parent = document.getElementById(parentId);
+    var before = document.getElementById(beforeId);
+    parent.insertBefore(w, before);
+}
+
+var insertNodes = function(newNodesList) {
+    for (var n in newNodesList) {
+        var node = newNodesList[n];
+        insertNode(node[0], node[1], node[2], node[3]);
+    }
+    return true;
+}
 
 var remove = function(parentId, childId) {
     /* Remove node with 'childId' from node with 'parentId'. */

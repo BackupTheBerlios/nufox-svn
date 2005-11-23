@@ -42,7 +42,9 @@ setup(
     },
 
     install_requires = [
-    'Nevow>=0.6',
+    'Nevow==0.6',
+##     'RuleDispatch>=0.5a0dev',
+##     'Twisted>=2.1.0',
     'RuleDispatch>=0.5a0dev',
 #    'Twisted>=2.1.0',
     ],
