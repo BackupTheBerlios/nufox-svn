@@ -395,8 +395,12 @@ def send(signal=Any, sender=Anonymous, *arguments, **named):
     # Return a list of tuple pairs [(receiver, response), ... ].
     responses = []
     for receiver in liveReceivers(getAllReceivers(sender, signal)):
+        # Wrap receiver using installed plugins.
+        original = receiver
+        for plugin in plugins:
+            receiver = plugin.wrap_receiver(receiver)
         response = robustapply.robustApply(
-            receiver,
+            receiver, original,
             signal=signal,
             sender=sender,
             *arguments,
@@ -420,8 +424,12 @@ def sendExact(signal=Any, sender=Anonymous, *arguments, **named):
     """
     responses = []
     for receiver in liveReceivers(getReceivers(sender, signal)):
+        # Wrap receiver using installed plugins.
+        original = receiver
+        for plugin in plugins:
+            receiver = plugin.wrap_receiver(receiver)
         response = robustapply.robustApply(
-            receiver,
+            receiver, original,
             signal=signal,
             sender=sender,
             *arguments,
@@ -448,6 +456,13 @@ class Plugin(object):
         be live by default PyDispatcher semantics.
         """
         return True
+
+    def wrap_receiver(self, receiver):
+        """Return a callable that passes arguments to the receiver.
+
+        Useful when you want to change the behavior of all receivers.
+        """
+        return receiver
 
 
 def _removeReceiver(receiver):

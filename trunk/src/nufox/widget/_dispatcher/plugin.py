@@ -3,6 +3,28 @@
 from nufox.widget._dispatcher import dispatcher
 
 
+class AsyncReceiver(dispatcher.Plugin):
+    """Plugin for PyDispatcher that wraps all receivers in callables
+    that return Twisted Deferred objects.
+
+    When the wrapped receiver is called, it adds a call to the actual
+    receiver to the reactor event loop, and returns a Deferred that is
+    called back with the result.
+    """
+
+    def __init__(self):
+        # Don't import reactor ourselves, but make access to it
+        # easier.
+        from twisted import internet
+        self._internet = internet
+
+    def wrap_receiver(self, receiver):
+        def wrapper(*args, **kw):
+            return self._internet.reactor.callLater(0, receiver, *args, **kw)
+        print '......... wrapped', receiver, 'into', wrapper
+        return wrapper
+
+
 class QtWidget(dispatcher.Plugin):
     """A Plugin for PyDispatcher that knows how to handle Qt widgets
     when using PyQt built with SIP 4 or higher.
@@ -40,3 +62,5 @@ class QtWidget(dispatcher.Plugin):
 
     def _is_live_no_qt(self, receiver):
         return True
+
+

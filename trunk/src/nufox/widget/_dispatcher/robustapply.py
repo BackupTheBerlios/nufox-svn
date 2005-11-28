@@ -28,9 +28,12 @@ def function(receiver):
     return receiver, receiver.func_code, 0
 
 
-def robustApply(receiver, *arguments, **named):
-    """Call receiver with arguments and appropriate subset of named."""
-    receiver, codeObject, startIndex = function(receiver)
+def robustApply(receiver, signature, *arguments, **named):
+    """Call receiver with arguments and appropriate subset of named.
+    `signature` is the callable used to determine the call signature
+    of the receiver, in case `receiver` is a callable wrapper of the
+    actual receiver."""
+    signature, codeObject, startIndex = function(signature)
     acceptable = codeObject.co_varnames[
         startIndex + len(arguments):
         codeObject.co_argcount
@@ -40,7 +43,7 @@ def robustApply(receiver, *arguments, **named):
             raise TypeError(
                 'Argument %r specified both positionally '
                 'and as a keyword for calling %r'
-                % (name, receiver)
+                % (name, signature)
                 )
     if not (codeObject.co_flags & 8):
         # fc does not have a **kwds type parameter, therefore 
