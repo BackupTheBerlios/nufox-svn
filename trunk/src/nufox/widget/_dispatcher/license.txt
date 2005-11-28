@@ -1,3 +1,7 @@
+nufox.widget._dispatcher is a fork of PyDispatcher, and is separately
+licensed from Nufox itself.
+
+
 PyDispatcher License
 
 	Copyright (c) 2001-2005, Patrick K. O'Brien and Contributors
