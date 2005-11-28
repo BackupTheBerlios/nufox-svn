@@ -21,7 +21,6 @@ class AsyncReceiver(dispatcher.Plugin):
     def wrap_receiver(self, receiver):
         def wrapper(*args, **kw):
             return self._internet.reactor.callLater(0, receiver, *args, **kw)
-        print '......... wrapped', receiver, 'into', wrapper
         return wrapper
 
 
