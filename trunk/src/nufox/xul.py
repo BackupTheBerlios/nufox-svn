@@ -278,6 +278,11 @@ class GenericWidget(object):
                 self.pageCtx._initWidgets(widget, parent=self)
         return self
 
+    def adopt(self, node):
+        """Make `node` a child of this widget, and return `node`."""
+        self.append(node)
+        return node
+
     def insert(self, before, *widgets):
         if self.alive:
             raise RuntimeError("Use liveInsert to insert to a live widget.")

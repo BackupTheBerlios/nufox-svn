@@ -167,11 +167,6 @@ class Widget(xul.XULWidgetTemplate):
         """Override this if necessary to manipulate widget during
         instantiation."""
 
-    def adopt(self, node):
-        """Make `node` a child of this widget, and return `node`."""
-        self.append(node)
-        return node
-
     def connect(self, signal, callback):
         """Connect the sending of `signal` by this widget to
         `callback`."""
