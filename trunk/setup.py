@@ -42,11 +42,8 @@ setup(
     },
 
     install_requires = [
-    'Nevow==0.6',
-##     'RuleDispatch>=0.5a0dev',
-##     'Twisted>=2.1.0',
-    'RuleDispatch>=0.5a0dev',
-#    'Twisted>=2.1.0',
+    'Nevow == 0.6',
+    'Louie >= 0.9',
     ],
     zip_safe = False,
 

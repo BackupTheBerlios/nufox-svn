@@ -1,9 +1,3 @@
-# Install a singleton async receiver for Louie.
-
-__all__ = []
-
-from nufox.widget._dispatcher.dispatcher import plugins
-from nufox.widget._dispatcher.plugin import AsyncReceiver
-
-plugins.append(AsyncReceiver())
-
+# Install Twisted support for Louie.
+import louie
+louie.install_plugin(louie.TwistedDispatchPlugin())

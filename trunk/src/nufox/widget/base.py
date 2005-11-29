@@ -1,7 +1,7 @@
 """nufox.widget base classes."""
 
-from nufox.widget import _dispatcher
-from nufox.widget._dispatcher import signal
+import louie
+
 from nufox import xul
 from nufox.xul import xulns
 
@@ -170,20 +170,20 @@ class Widget(xul.XULWidgetTemplate):
     def connect(self, signal, callback):
         """Connect the sending of `signal` by this widget to
         `callback`."""
-        _dispatcher.connect(callback, signal, self)
+        louie.connect(callback, signal, self)
 
     def disconnect(self, signal, callback):
         """Reverse of `connect`."""
-        _dispatcher.disconnect(callback, signal, self)
+        louie.disconnect(callback, signal, self)
 
     def dispatch(self, signal, *args):
         """Dispatch `signal` with optional `args` to listeners."""
-        _dispatcher.send(signal, self, *args)
+        louie.send(signal, self, *args)
 
     def getTag(self):
         t = getattr(self.namespace, self.tag)
         return t(*self.xmlNamespaces, **self.kwargs)
 
     
-class Signal(signal.Signal):
+class Signal(louie.Signal):
     pass
