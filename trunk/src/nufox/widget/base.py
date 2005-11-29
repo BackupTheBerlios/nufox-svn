@@ -181,7 +181,6 @@ class Widget(xul.XULWidgetTemplate):
         _dispatcher.send(signal, self, *args)
 
     def getTag(self):
-        self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         t = getattr(self.namespace, self.tag)
         return t(*self.xmlNamespaces, **self.kwargs)
 

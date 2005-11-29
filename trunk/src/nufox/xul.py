@@ -440,9 +440,10 @@ class GenericWidget(object):
         return ["_m", self.id, method, list(args)]
 
     def addHandler(self, event, handler, *args):
-        args = ["'%s'" % event] + [repr(a) for a in args]
-        call = "rCall(this, %s)" % ", ".join(args)
+        args = [u"'%s'" % event] + [repr(a) for a in args]
+        call = u'rCall(this, %s)' % ', '.join(args)
         self.handlers[event] = (handler, call)
+        self.kwargs[event] = call
         return self
 
 flat.registerFlattener(lambda orig, ctx: orig.rend(ctx), GenericWidget)
@@ -483,7 +484,6 @@ class Window(GenericWidget):
         self.pageCtx.callRemote('resizeWindow', width, height)
 
     def getTag(self):
-        self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         return xulns.window(xulns, htmlns, *self.xmlNameSpaces, **self.kwargs)
 
 
@@ -501,7 +501,6 @@ class XULWidgetTemplate(GenericWidget):
         self.kwargs = kwargs
 
     def getTag(self):
-        self.kwargs.update(dict([(k,v[1]) for k,v in self.handlers.items()]))
         return getattr(xulns, self.tag)(**self.kwargs)
 
 
