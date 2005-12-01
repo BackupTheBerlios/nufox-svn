@@ -56,14 +56,13 @@ class ExampleViewer(xul.XULPage):
         self.__doc__ = example.__doc__ or 'No Description'
         doc = unicode(self.__doc__)
         title = example.title
-        discussion = unicode(getattr(example, 'discussion', u'No Discussion'))
         # Create the outer tab box.
         window = self.window = Window(title=title)
         tabBox = xul.TabBox(flex=1)
         window.append(tabBox)
         tabs = xul.Tabs()
         tabBox.append(tabs)
-        for label in [u'Example', u'Source', u'Discussion']:
+        for label in [u'Example', u'Source']:
             tabs.append(xul.Tab(label=label))
         panels = xul.TabPanels(flex=1)
         tabBox.append(panels)
@@ -73,15 +72,6 @@ class ExampleViewer(xul.XULPage):
         # Create the 'Source' tab panel.
         sources = xul.IFrame(flex=1, src='/sources/%s.py' % moduleId)
         panels.append(sources)
-        # Create the 'Discussion' tab panel.
-        discussionBox = xul.VBox(flex=1)
-        panels.append(discussionBox)
-        groupBox = xul.GroupBox()
-        discussionBox.append(groupBox)
-        docLabel = xul.Label().append(doc)
-        groupBox.append(docLabel)
-        discussionLabel = xul.Label().append(discussion)
-        discussionBox.append(discussionLabel)
 
 
 def getExamples():
