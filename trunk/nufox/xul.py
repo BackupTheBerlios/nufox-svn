@@ -283,6 +283,14 @@ class GenericWidget(object):
         self.append(node)
         return node
 
+    def close(self):
+        """Close this widget.
+
+        Typically, this means removing the widget from its parent,
+        although specific widgets may provide alternative behaviors.
+        """
+        return self.parent.remove(self)
+
     def insert(self, before, *widgets):
         if self.alive:
             raise RuntimeError("Use liveInsert to insert to a live widget.")

@@ -6,6 +6,10 @@ from nufox import xul
 from nufox.xul import xulns
 
 
+class Signal(louie.Signal):
+    pass
+
+
 class Widget(xul.XULWidgetTemplate):
     """Base class for all `nufox.widget` classes.
 
@@ -148,6 +152,10 @@ class Widget(xul.XULWidgetTemplate):
     deferreds.
     """
 
+    class closed(Signal):
+        """The widget was closed."""
+        args = ()
+
     # Override these in subclasses.
     tag = None
     namespace = xulns
@@ -167,6 +175,15 @@ class Widget(xul.XULWidgetTemplate):
         """Override this if necessary to manipulate widget during
         instantiation."""
 
+    def close(self):
+        """Close this widget, and dispatch a signal about its closure
+        once the operation has completed."""
+        return super(Widget, self).close().addCallback(self._after_close)
+        
+    def _after_close(self, result):
+        self.dispatch(self.closed)
+        return result
+
     def connect(self, signal, callback):
         """Connect the sending of `signal` by this widget to
         `callback`."""
@@ -185,5 +202,3 @@ class Widget(xul.XULWidgetTemplate):
         return t(*self.xmlNamespaces, **self.kwargs)
 
     
-class Signal(louie.Signal):
-    pass
