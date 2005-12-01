@@ -6,9 +6,6 @@ ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
 
-packages = find_packages('src')
-
-
 setup(
     name = 'Nufox',
     version = '0.2.0',
@@ -35,8 +32,7 @@ setup(
     ## Fill me in.
     ],
 
-    package_dir = {'': 'src'},
-    packages = packages,
+    packages=find_packages(exclude=['doc', 'ez_setup', 'examples', 'tests']),
     package_data = {
     ## Fill me in.
     },
