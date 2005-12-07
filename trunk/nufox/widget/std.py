@@ -6,11 +6,16 @@ from nufox.widget import signal
 from nufox.xul import bigListOXulTags
 
 
-def _to_boolean(self, value):
-    return succeed(value.lower() == u'true')
+def _to_bool(value):
+    return value.lower() == u'true'
 
-def _from_boolean(self, value):
-    return succeed(unicode(value).lower())
+def _from_bool(value):
+    return unicode(value).lower()
+
+def _from_int_or_zero(value):
+    if value:
+        return int(value)
+    return 0
 
 
 class Standard(Widget):
@@ -37,9 +42,25 @@ class Standard(Widget):
         yield wait(self.dispatch(signal.jsOncommand))
         yield None
 
-    preSet_disabled = _from_boolean
-    postGet_disabled = _to_boolean
-            
+    # Make ``disabled`` a bool.
+
+    def postGet_disabled(self, value):
+        return succeed(_to_bool(value))
+
+    def preSet_disabled(self, value):
+        return succeed(('disabled', _from_bool(value)))
+
+    # At times it's handy to think of it as ``enabled`` instead.
+
+    def preGet_enabled(self):
+        return succeed('disabled')
+
+    def postGet_enabled(self, value):
+        return succeed(not _to_bool(value))
+
+    def preSet_disabled(self, value):
+        return succeed(('disabled', _from_bool(not value)))
+
 
 g = globals()
 for t in bigListOXulTags:
@@ -65,6 +86,50 @@ class Button(_Button):
         yield None
 
 
+_Deck = Deck
+class Deck(_Deck):
+    """Deck.
+
+    Attributes:
+
+    - ``selectedPage`` can be used to get the actual widget
+      corresponding to the ``selectedIndex``.
+
+    Dispatches:
+
+    - `nufox.widget.signal.pageSelected` when the deck's page was
+      changed.
+    """
+
+    def postGet_selectedIndex(self, value):
+        return succeed(_from_int_or_zero(value))
+
+    def preGet_selectedPage(self):
+        return succeed('selectedIndex')
+
+    def postGet_selectedPage(self):
+        return succeed(self.children.index(page))
+
+    def preSet_selectedPage(self, page):
+        index = self.children.index(page)
+        return succeed(('selectedIndex', index))
+
+    @defgen
+    def addPage(self, page):
+        """Returns the index of ``page`` after adding it."""
+        yield wait(self.liveAppend(page))
+        yield self.children.index(page)
+
+    def removePage(self, page):
+        """Removes the ``page`` child."""
+        return self.remove(page)
+
+    def indexOfPage(self, page):
+        return self.children.index(page)
+
+    def indexToPage(self, index):
+        return self.children[index]
+    
 
 _Label = Label
 class Label(_Label):

@@ -9,6 +9,16 @@ class changed(Signal):
     args = ('value', )
 
 
+class canGoBack(Signal):
+    """Argument is True if a browser can go back one page."""
+    args = ('can', )
+
+
+class canGoForward(Signal):
+    """Argument is False if a browser can go forward one page."""
+    args = ('can', )
+
+
 class clicked(Signal):
     """The widget was clicked."""
     args = ()

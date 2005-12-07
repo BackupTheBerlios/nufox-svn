@@ -2,99 +2,28 @@ from nufox.defer import defgen, wait
 from twisted.internet.defer import DeferredList
 
 from nufox.widget.base import Signal, Widget
+from nufox.widget import signal, std
 from nufox import xul
 
 
-def _intOrZero(value):
-    if value:
-        return int(value)
-    return 0
-
-
-class Deck(Widget):
-    """Deck."""
-
-    tag = 'deck'
-
-    class pageSelected(Signal):
-        """The deck's page was changed."""
-        args = ('page', )
-
-    @defgen
-    def currentIndex(self):
-        selectedIndex = wait(self.getAttr('selectedIndex'))
-        yield selectedIndex
-        selectedIndex = selectedIndex.getResult()
-        yield _intOrZero(selectedIndex)
-
-    @defgen
-    def setCurrentIndex(self, index):
-        yield wait(self.setAttr('selectedIndex', index))
-        yield index
-
-    @defgen
-    def currentPage(self):
-        currentIndex = wait(self.currentIndex())
-        yield currentIndex
-        currentIndex = currentIndex.getResult()
-        yield self.children[currentIndex]
-
-    @defgen
-    def setCurrentPage(self, page):
-        index = self.children.index(page)
-        yield wait(self.setAttr('selectedIndex', index))
-        yield page
-
-    @defgen
-    def addPage(self, page):
-        yield wait(self.liveAppend(page))
-        yield self.children.index(page)
-
-    def removePage(self, page):
-        return self.remove(page)
-
-    def indexForPage(self, page):
-        return self.children.index(page)
-
-    def pageForIndex(self, index):
-        return self.children[index]
-
-
-class DeckBrowser(Deck):
+class DeckBrowser(std.Deck):
     """A specialized deck that acts like a web browser."""
 
-    tag = 'deck'
-
-    class canGoBack(Signal):
-        """Argument is True if the deck can go back one page."""
-        args = ('can', )
-
-    class canGoForward(Signal):
-        """Argument is False if the deck can go forward one page."""
-        args = ('can', )
-
     def setup(self):
-        Deck.setup(self)
+        std.Deck.setup(self)
         self.curCanGoBack = False
         self.curCanGoForward = False
 
-    @defgen
-    def setCurrentIndex(self, index):
-        yield wait(Deck.setCurrentIndex(self, index))
-        yield wait(self._updateBackForward(index))
-        yield index
+    def postSet_selectedIndex(self, index):
+        return self._updateBackForward(index)
 
-    @defgen
-    def setCurrentPage(self, page):
-        index = self.children.index(page)
-        yield wait(self.setAttr('selectedIndex', index))
-        yield wait(self._updateBackForward(index))
-        yield page
+    def postSet_selectedPage(self, page):
+        return self._updateBackForward(index)
 
     @defgen
     def addPage(self, page):
         # First, remove pages beyond the current index.
-        index = wait(self.currentIndex())
+        index = wait(self.get('selectedIndex'))
         yield index
         index = index.getResult()
         toRemove = self.children[index + 1:]
@@ -102,22 +31,22 @@ class DeckBrowser(Deck):
             self.removePage(page) for page in toRemove
             ]))
         # Next, add the new page.
-        index = wait(Deck.addPage(self, page))
+        index = wait(std.Deck.addPage(self, page))
         yield index
         index = index.getResult()
         # Select the page after adding it.
-        yield wait(self.setCurrentIndex(index))
+        yield wait(self.set('selectedIndex', index))
         # Update back/forward.
         yield wait(self._updateBackForward(index))
         yield index
 
     @defgen
     def goBack(self):
-        index = wait(self.currentIndex())
+        index = wait(self.get('selectedIndex'))
         yield index
         index = index.getResult()
         if index != 0:
-            index = wait(self.setCurrentIndex(index - 1))
+            index = wait(self.set('selectedIndex', index - 1))
             yield index
             index = index.getResult()
             yield index
@@ -126,11 +55,11 @@ class DeckBrowser(Deck):
 
     @defgen
     def goForward(self):
-        index = wait(self.currentIndex())
+        index = wait(self.get('selectedIndex'))
         yield index
         index = index.getResult()
         if index + 1 < len(self.children):
-            index = wait(self.setCurrentIndex(index + 1))
+            index = wait(self.set('selectedIndex', index + 1))
             yield index
             index = index.getResult()
             yield index

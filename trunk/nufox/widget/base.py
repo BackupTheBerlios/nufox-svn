@@ -221,7 +221,7 @@ class Widget(xul.XULWidgetTemplate):
     def get(self, attr):
         fn = getattr(self, 'preGet_%s' % attr, None)
         if callable(fn):
-            attr = wait(fn(attr))
+            attr = wait(fn())
             yield attr
             attr = attr.getResult()
         value = wait(xul.XULWidgetTemplate.get(self, attr))
@@ -240,7 +240,7 @@ class Widget(xul.XULWidgetTemplate):
         if callable(fn):
             value = wait(fn(value))
             yield value
-            value = value.getResult()
+            attr, value = value.getResult()
         yield wait(xul.XULWidgetTemplate.set(self, attr, value))
         fn = getattr(self, 'postSet_%s' % attr, None)
         if callable(fn):
