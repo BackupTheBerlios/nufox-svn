@@ -2,15 +2,13 @@
 
 import louie
 
-from twisted.internet.defer import Deferred, DeferredList
+from twisted.internet.defer import succeed, Deferred, DeferredList
 
 from nufox.defer import defgen, wait
+from nufox.widget import signal
+from nufox.widget.signal import Signal
 from nufox import xul
 from nufox.xul import xulns
-
-
-class Signal(louie.Signal):
-    pass
 
 
 class Widget(xul.XULWidgetTemplate):
@@ -155,24 +153,25 @@ class Widget(xul.XULWidgetTemplate):
     deferreds.
     """
 
-    class closed(Signal):
-        """The widget was closed."""
-        args = ()
-
     # Override these in subclasses.
     tag = None
     namespace = xulns
     xmlNamespaces = []
     
     def __init__(self, **kwargs):
-        self.preSetup(kwargs)
-        result = xul.XULWidgetTemplate.__init__(self, **kwargs)
+        self.__receivers = []
+        self.preInit(kwargs)
+        xul.XULWidgetTemplate.__init__(self, **kwargs)
+        self.preSetup()
         self.setup()
-        return result
 
-    def preSetup(self, kwargs):
+    def preInit(self, kwargs):
         """Override this if necessary to manipulate kwargs in
         subclasses during instantiation."""
+
+    def preSetup(self):
+        """Override this if necessary to manipulate widget during
+        instantiation."""
 
     def setup(self):
         """Override this if necessary to manipulate widget during
@@ -184,17 +183,19 @@ class Widget(xul.XULWidgetTemplate):
         return super(Widget, self).close().addCallback(self._after_close)
         
     def _after_close(self, result):
-        self.dispatch(self.closed)
+        self.dispatch(signal.closed)
         return result
 
-    def connect(self, signal, callback):
+    def connect(self, signal, receiver):
         """Connect the sending of ``signal`` by this widget to
-        ``callback``."""
-        louie.connect(callback, signal, self)
+        ``receiver``."""
+        louie.connect(receiver, signal, self)
+        self.__receivers.append((receiver, signal))
 
-    def disconnect(self, signal, callback):
+    def disconnect(self, signal, receiver):
         """Reverse of ``connect``."""
-        louie.disconnect(callback, signal, self)
+        louie.disconnect(receiver, signal, self)
+        self.__receivers.remove((receiver, signal))
 
     @defgen
     def dispatch(self, signal, *args):
@@ -216,4 +217,32 @@ class Widget(xul.XULWidgetTemplate):
         t = getattr(self.namespace, self.tag)
         return t(*self.xmlNamespaces, **self.kwargs)
 
-    
+    @defgen
+    def get(self, attr):
+        fn = getattr(self, 'preGet_%s' % attr, None)
+        if callable(fn):
+            attr = wait(fn(attr))
+            yield attr
+            attr = attr.getResult()
+        value = wait(xul.XULWidgetTemplate.get(self, attr))
+        yield value
+        value = value.getResult()
+        fn = getattr(self, 'postGet_%s' % attr, None)
+        if callable(fn):
+            value = wait(fn(value))
+            yield value
+            value = value.getResult()
+        yield value
+
+    @defgen
+    def set(self, attr, value):
+        fn = getattr(self, 'preSet_%s' % attr, None)
+        if callable(fn):
+            value = wait(fn(value))
+            yield value
+            value = value.getResult()
+        yield wait(xul.XULWidgetTemplate.set(self, attr, value))
+        fn = getattr(self, 'postSet_%s' % attr, None)
+        if callable(fn):
+            yield wait(fn(value))
+        yield None

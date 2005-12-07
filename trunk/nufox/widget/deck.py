@@ -108,7 +108,7 @@ class DeckBrowser(Deck):
         # Select the page after adding it.
         yield wait(self.setCurrentIndex(index))
         # Update back/forward.
-        yield waitFordeferred(self._updateBackForward(index))
+        yield wait(self._updateBackForward(index))
         yield index
 
     @defgen

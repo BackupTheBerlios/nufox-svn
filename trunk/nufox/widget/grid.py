@@ -17,7 +17,7 @@ class ItemGrid(Grid):
 
     HORIZONTAL, VERTICAL = range(2)
 
-    def preSetup(self, kwargs):
+    def preInit(self, kwargs):
         self.orientation = kwargs.pop('orientation', self.VERTICAL)
 
     def setup(self):

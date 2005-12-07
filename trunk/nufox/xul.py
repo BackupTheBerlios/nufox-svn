@@ -7,6 +7,7 @@ from twisted.python.util import sibpath
 
 from nevow import athena, url, loaders, inevow, static, tags as T, flat
 
+from nufox.defer import defgen, wait
 from nufox import xmlstan
 
 # These are XUL elements that should not have an end tag. Please add
@@ -350,7 +351,7 @@ class GenericWidget(object):
                                     ))
                             marshal(child)
             marshal(self)
-            d = self.pageCtx.callRemote('appendNodes', newNodes)
+            d = self.callGlobal('appendNodes', newNodes)
             def returnSelf(result):
                 return self
             d.addCallback(returnSelf)
@@ -379,7 +380,7 @@ class GenericWidget(object):
                             child.kwargs))
                         marshal(child)
             marshal(self)
-            d = self.pageCtx.callRemote('insertNodes', newNodes)
+            d = self.callGlobal('insertNodes', newNodes)
             def returnSelf(result):
                 return self
             d.addCallback(returnSelf)
@@ -396,8 +397,8 @@ class GenericWidget(object):
         for widget in widgets:
             self.children.remove(widget)
         if self.alive:
-            return self.pageCtx.callRemote('removeNodes', self.id,
-                                           [w.id for w in widgets])
+            return self.callGlobal('removeNodes', self.id,
+                                   [w.id for w in widgets])
         return defer.succeed(None)
 
     def clear(self):
@@ -413,29 +414,36 @@ class GenericWidget(object):
         self.alive = True
         return self.getTag()[self.children]
 
-    def setAttr(self, attr, value):
+    def callMethod(self, method, *args):
+        """call method with args on this node."""
+        return self.callGlobal('callMethod', self.id, method, args)
+
+    @property
+    def callGlobal(self):
+        return self.pageCtx.callRemote
+
+    @defgen
+    def get(self, attr, default=u''):
+        """Get the value of a remote attribute."""
+        if not self.alive:
+            yield self.kwargs.get(attr, default)
+        else:
+            value = wait(self.callGlobal(
+                'getAttr', self.id, attr.decode('ascii')))
+            yield value
+            value = value.getResult()
+            yield value[0][0]
+    getAttr = get # Backwards compatibility.
+
+    def set(self, attr, value):
+        """Set the value of a remote attribute."""
         if not self.alive:
             self.kwargs[attr] = value
             return defer.succeed(None)
         else:
-            return self.pageCtx.callRemote('setAttr', self.id,
-                                           attr.decode('ascii'), value)
-
-    def callMethod(self, method, *args):
-        """call method with args on this node."""
-        return self.pageCtx.callRemote('callMethod', self.id, method, args)
-
-    def getAttr(self, attr):
-        """Get the value of a remote attribute."""
-        if not self.alive:
-            return defer.succeed(self.kwargs.get(attr, u''))
-        else:
-            def _getAttr(result):
-                return result[0][0]
-            d = self.pageCtx.callRemote(
-                "getAttr", self.id, attr.decode('ascii'))
-            d.addCallback(_getAttr)
-            return d
+            return self.callGlobal(
+                'setAttr', self.id, attr.decode('ascii'), value)
+    setAttr = set # Backwards compatibility.
 
     def requestAttr(self, attr):
         """You can pass me as an extra argument to addHandler to get the result
@@ -479,7 +487,7 @@ class Window(GenericWidget):
         self.setAttr('title', title)
 #        self.pageCtx.client.send(
 #            livepage.js('document.title = \'%s\';' % title))
-        self.pageCtx.callRemote('setWindowTitle', title)
+        self.callGlobal('setWindowTitle', title)
         
     def setDimensions(self, width=None, height=None):
         width = width or self.kwargs.get('width')
@@ -489,7 +497,7 @@ class Window(GenericWidget):
         self.setAttr(u'width', width)
 #       self.pageCtx.client.send(
 #            livepage.js('window.resizeTo(%s,%s);' % (height, width)))
-        self.pageCtx.callRemote('resizeWindow', width, height)
+        self.callGlobal('resizeWindow', width, height)
 
     def getTag(self):
         return xulns.window(xulns, htmlns, *self.xmlNameSpaces, **self.kwargs)
