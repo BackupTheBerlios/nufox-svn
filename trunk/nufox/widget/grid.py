@@ -1,17 +1,10 @@
 from nufox.defer import defgen, wait
 from twisted.internet.defer import DeferredList
 
-from nufox.widget.base import Signal, Widget
-from nufox import xul
+from nufox.widget import signal, std
 
 
-class Grid(Widget):
-    """Grid."""
-
-    tag = 'grid'
-
-
-class ItemGrid(Grid):
+class ItemGrid(std.Grid):
     """Grid suited towards displaying mostly homogeneous lists of
     items."""
 
@@ -21,22 +14,22 @@ class ItemGrid(Grid):
         self.orientation = kwargs.pop('orientation', self.VERTICAL)
 
     def setup(self):
-        columns = self.columns = xul.Columns()
-        rows = self.rows = xul.Rows()
+        columns = self.columns = std.Columns()
+        rows = self.rows = std.Rows()
         if self.orientation is self.VERTICAL:
             self.append(columns, rows)
-            self.headingWidgets = rows.adopt(xul.Row())
-            self.headingClass = xul.Column
+            self.headingWidgets = rows.adopt(std.Row())
+            self.headingClass = std.Column
             self.headingContainer = columns
             self.itemWidgets = rows
-            self.itemClass = xul.Row
+            self.itemClass = std.Row
         elif self.orientation is self.HORIZONTAL:
             self.append(rows, columns)
-            self.headingWidgets = columns.adopt(xul.Column())
-            self.headingClass = xul.Row
+            self.headingWidgets = columns.adopt(std.Column())
+            self.headingClass = std.Row
             self.headingContainer = rows
             self.itemWidgets = columns
-            self.itemClass = xul.Column
+            self.itemClass = std.Column
 
     @defgen
     def addHeading(self, widget, **kwargs):
