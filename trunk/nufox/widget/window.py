@@ -1,3 +1,4 @@
+from nufox.defer import defgen, wait
 from twisted.internet.defer import Deferred, DeferredList
 
 from nufox.widget.base import Widget
@@ -18,53 +19,45 @@ class Window(Widget):
         """title() -> deferred title of window"""
         return self.getAttr(u'title')
 
+    @defgen
     def setTitle(self, title):
         """setTitle(title) -> deferred title of window."""
         # Set the `title` attribute of the XUL window, and also set
         # the title of the browser window.
-        def returnTitle(result):
-            return title
-        return DeferredList([
+        yield wait(DeferredList([
             self.setAttr(u'title', title),
             self.pageCtx.callRemote('setWindowTitle', title),
-            ]).addCallback(returnTitle)
-        
+            ]))
+        yield title
+
+    @defgen
     def dimensions(self):
         """dimensions() -> deferred (width, height) of window"""
-        def toTuple(results):
-            return tuple(result for success, result in results)
-        return DeferredList([
+        yield wait(DeferredList([
             self.getAttr(u'width'),
             self.getAttr(u'height'),
-            ]).addCallback(toTuple)
+            ]))
+        yield tuple(result for success, result in results)
 
+    @defgen
     def setDimensions(self, width=None, height=None):
         """setDimensions(width, height) -> deferred (width, height) of
         window"""
-        d = Deferred()
         if not width or not height:
             # Get existing dimensions.
-            dDimensions = self.dimensions()
+            dimensions = wait(self.dimensions())
+            yield dimensions
+            dimensions = dimensions.getResult()
             # Update new dimensions as necessary.
-            def updateDimensions(dimensions):
-                curWidth, curHeight = dimensions
-                width = width or curWidth
-                height = height or curHeight
-                return (width, height)
-            d.chainDeferred(dDimensions.addCallback(updateDimensions))
-        else:
-            # Use new dimensions.
-            d.callback((width, height))
+            curWidth, curHeight = dimensions
+            width = width or curWidth
+            height = height or curHeight
         # Set the height and width of the XUL window, and resize the
         # browser window.
-        def setXulAttributes(dimensions):
-            width, height = dimensions
-            def returnDimensions(result):
-                return dimensions
-            return DeferredList([
-                self.setAttr(u'width', width),
-                self.setAttr(u'height', height),
-                self.pageCtx.callRemote(u'resizeWindow', width, height)
-                ]).addCallback(returnDimensions)
-        return d.addCallback(setXulAttributes)
+        yield wait(DeferredList([
+            self.setAttr(u'width', width),
+            self.setAttr(u'height', height),
+            self.pageCtx.callRemote(u'resizeWindow', width, height),
+            ]))
+        yield (width, height)
 

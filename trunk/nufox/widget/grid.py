@@ -1,3 +1,4 @@
+from nufox.defer import defgen, wait
 from twisted.internet.defer import DeferredList
 
 from nufox.widget.base import Signal, Widget
@@ -37,16 +38,15 @@ class ItemGrid(Grid):
             self.itemWidgets = columns
             self.itemClass = xul.Column
 
+    @defgen
     def addHeading(self, widget, **kwargs):
         """Add `widget` as the next column or row heading, depending
         on the orientation."""
-        d = DeferredList([
+        yield wait(DeferredList([
             self.headingContainer.liveAppend(self.headingClass(**kwargs)),
             self.headingWidgets.liveAppend(widget),
-            ])
-        def returnWidget(result):
-            return widget
-        return d.addCallback(returnWidget)
+            ]))
+        yield widget
         
     def addItem(self, *widgets, **kwargs):
         """Add `widgets` as the next item row or column, depending on

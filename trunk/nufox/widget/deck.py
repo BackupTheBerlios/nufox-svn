@@ -1,3 +1,4 @@
+from nufox.defer import defgen, wait
 from twisted.internet.defer import DeferredList
 
 from nufox.widget.base import Signal, Widget
@@ -19,33 +20,35 @@ class Deck(Widget):
         """The deck's page was changed."""
         args = ('page', )
 
+    @defgen
     def currentIndex(self):
-        return self.getAttr('selectedIndex').addCallback(_intOrZero)
+        selectedIndex = wait(self.getAttr('selectedIndex'))
+        yield selectedIndex
+        selectedIndex = selectedIndex.getResult()
+        yield _intOrZero(selectedIndex)
 
+    @defgen
     def setCurrentIndex(self, index):
-        def returnIndex(result):
-            return index
-        return self.setAttr('selectedIndex', index).addCallback(returnIndex)
+        yield wait(self.setAttr('selectedIndex', index))
+        yield index
 
+    @defgen
     def currentPage(self):
-        d = self.getAttr('selectedIndex').addCallback(_intOrZero)
-        def toPage(index):
-            return self.children[index]
-        return d.addCallback(toPage)
+        currentIndex = wait(self.currentIndex())
+        yield currentIndex
+        currentIndex = currentIndex.getResult()
+        yield self.children[currentIndex]
 
+    @defgen
     def setCurrentPage(self, page):
         index = self.children.index(page)
-        d = self.setAttr('selectedIndex', index)
-        def returnPage(result):
-            return page
-        return d.addCallback(returnPage)
+        yield wait(self.setAttr('selectedIndex', index))
+        yield page
 
+    @defgen
     def addPage(self, page):
-        d = self.liveAppend(page)
-        def toIndex(result):
-            return self.children.index(page)
-        d.addCallback(toIndex)
-        return d
+        yield wait(self.liveAppend(page))
+        yield self.children.index(page)
 
     def removePage(self, page):
         return self.remove(page)
@@ -75,71 +78,77 @@ class DeckBrowser(Deck):
         self.curCanGoBack = False
         self.curCanGoForward = False
 
+    @defgen
     def setCurrentIndex(self, index):
-        return Deck.setCurrentIndex(self, index).addCallback(
-            self._updateBackForward)
+        yield wait(Deck.setCurrentIndex(self, index))
+        yield wait(self._updateBackForward(index))
+        yield index
 
+    @defgen
     def setCurrentPage(self, page):
         index = self.children.index(page)
-        d = self.setAttr('selectedIndex', index)
-        def update(result):
-            return self._updateBackForward(index)
-        d.addCallback(update)
-        def returnPage(result):
-            return page
-        return d.addCallback(returnPage)
+        yield wait(self.setAttr('selectedIndex', index))
+        yield wait(self._updateBackForward(index))
+        yield page
 
+    @defgen
     def addPage(self, page):
         # First, remove pages beyond the current index.
-        d = self.currentIndex()
-        def removePages(index):
-            toRemove = self.children[index + 1:]
-            def returnIndex(result):
-                return index
-            return DeferredList([
-                self.removePage(page) for page in toRemove
-                ]).addCallback(returnIndex)
-        d.addCallback(removePages)
+        index = wait(self.currentIndex())
+        yield index
+        index = index.getResult()
+        toRemove = self.children[index + 1:]
+        yield wait(DeferredList([
+            self.removePage(page) for page in toRemove
+            ]))
         # Next, add the new page.
-        def addPage(result):
-            d = Deck.addPage(self, page)
-            return d
-        d.addCallback(addPage)
+        index = wait(Deck.addPage(self, page))
+        yield index
+        index = index.getResult()
         # Select the page after adding it.
-        d.addCallback(self.setCurrentIndex)
-        # Update back/foward.
-        d.addCallback(self._updateBackForward)
-        return d
+        yield wait(self.setCurrentIndex(index))
+        # Update back/forward.
+        yield waitFordeferred(self._updateBackForward(index))
+        yield index
 
+    @defgen
     def goBack(self):
-        d = self.currentIndex()
-        def go(index):
-            if index == 0:
-                pass
-            else:
-                return self.setCurrentIndex(index - 1)
-        return d.addCallback(go)
+        index = wait(self.currentIndex())
+        yield index
+        index = index.getResult()
+        if index != 0:
+            index = wait(self.setCurrentIndex(index - 1))
+            yield index
+            index = index.getResult()
+            yield index
+        else:
+            yield None
 
+    @defgen
     def goForward(self):
-        d = self.currentIndex()
-        def go(index):
-            if index + 1 == len(self.children):
-                pass
-            else:
-                return self.setCurrentIndex(index + 1)
-        return d.addCallback(go)
+        index = wait(self.currentIndex())
+        yield index
+        index = index.getResult()
+        if index + 1 < len(self.children):
+            index = wait(self.setCurrentIndex(index + 1))
+            yield index
+            index = index.getResult()
+            yield index
+        else:
+            yield None
 
+    @defgen
     def _updateBackForward(self, curIndex):
         if curIndex == 0 and self.curCanGoBack:
             self.curCanGoBack = False
-            self.dispatch(self.canGoBack, False)
+            yield wait(self.dispatch(self.canGoBack, False))
         elif curIndex != 0 and not self.curCanGoBack:
             self.curCanGoBack = True
-            self.dispatch(self.canGoBack, True)
+            yield wait(self.dispatch(self.canGoBack, True))
         if curIndex + 1 == len(self.children) and self.curCanGoForward:
             self.curCanGoForward = False
-            self.dispatch(self.canGoForward, False)
+            yield wait(self.dispatch(self.canGoForward, False))
         elif curIndex + 1 < len(self.children) and not self.curCanGoForward:
             self.curCanGoForward = True
-            self.dispatch(self.canGoForward, True)
-        return curIndex
+            yield wait(self.dispatch(self.canGoForward, True))
+        yield curIndex

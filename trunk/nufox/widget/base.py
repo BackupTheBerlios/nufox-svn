@@ -2,6 +2,9 @@
 
 import louie
 
+from twisted.internet.defer import Deferred, DeferredList
+
+from nufox.defer import defgen, wait
 from nufox import xul
 from nufox.xul import xulns
 
@@ -193,9 +196,21 @@ class Widget(xul.XULWidgetTemplate):
         """Reverse of ``connect``."""
         louie.disconnect(callback, signal, self)
 
+    @defgen
     def dispatch(self, signal, *args):
-        """Dispatch ``signal`` with optional ``args`` to listeners."""
-        louie.send(signal, self, *args)
+        """Dispatch ``signal`` with optional ``args`` to listeners.
+
+        Returns a DeferredList that calls back with a list of
+        (receiver, result) tuples after all receivers have finished.
+        """
+        receiver_results = louie.send(signal, self, *args)
+        results = []
+        for receiver, result in receiver_results:
+            result = wait(result)
+            yield result
+            result = result.getResult()
+            results.append((receiver, result))
+        yield results
 
     def getTag(self):
         t = getattr(self.namespace, self.tag)

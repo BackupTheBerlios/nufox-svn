@@ -1,3 +1,5 @@
+from nufox.defer import defgen, wait
+
 from nufox.widget.base import Signal, Widget
 from nufox import xul
 
@@ -18,20 +20,23 @@ class Button(Widget):
     def setup(self):
         self.addHandler('oncommand', self.handle_oncommand)
 
+    @defgen
     def handle_oncommand(self):
-        self.dispatch(self.clicked)
+        yield wait(self.dispatch(self.clicked))
+        yield None
 
+    @defgen
     def enabled(self):
-        d = self.getAttr('disabled')
-        def invert(result):
-            return result.lower() != u'true'
-        return d
+        disabled = wait(self.getAttr('disabled'))
+        yield disabled
+        disabled = disabled.getResult()
+        yield result.lower() != u'true'
 
+    @defgen
     def setEnabled(self, enabled):
         if enabled:
             disabled = u''
         else:
             disabled = u'true'
-        def returnEnabled(result):
-            return enabled
-        return self.setAttr('disabled', disabled).addCallback(returnEnabled)
+        yield wait(self.setAttr('disabled', disabled))
+        yield enabled

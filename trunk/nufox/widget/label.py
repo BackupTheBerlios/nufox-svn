@@ -1,3 +1,5 @@
+from nufox.defer import defgen, wait
+
 from nufox.widget.base import Signal, Widget
 from nufox import xul
 
@@ -17,9 +19,9 @@ class Label(Widget):
     def value(self):
         return self.getAttr(u'value')
 
+    @defgen
     def setValue(self, value):
-        def valueSet(result):
-            self.dispatch(self.changed, value)
-            return value
-        return self.setAttr(u'value', value).addCallback(valueSet)
+        yield wait(self.setAttr('value', value))
+        yield wait(self.dispatch(self.changed, value))
+        yield value
 
