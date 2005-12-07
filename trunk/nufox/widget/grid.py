@@ -40,9 +40,32 @@ class ItemGrid(std.Grid):
             self.headingWidgets.liveAppend(widget),
             ]))
         yield widget
-        
+
+    @defgen
     def addItem(self, *widgets, **kwargs):
         """Add `widgets` as the next item row or column, depending on
         the orientation."""
-        return self.itemWidgets.liveAppend(
-            self.itemClass(**kwargs).append(*widgets))
+        row = self.itemClass(**kwargs).append(*widgets)
+        yield wait(self.addRow(row))
+        yield row
+
+    @defgen
+    def addRow(self, widget):
+        """Add `widget` as the next item row or column, spanning the
+        entire width or height, depending on the orientation."""
+        yield wait(self.itemWidgets.liveAppend(widget))
+        yield widget
+
+    @defgen
+    def insertItem(self, after, *widgets, **kwargs):
+        """Insert row after `after`."""
+        row = self.itemClass(**kwargs).append(*widgets)
+        yield wait(self.insertRow(after, row))
+        yield row
+
+    @defgen
+    def insertRow(self, after, widget):
+        """Insert `widget` after `after`."""
+        yield wait(self.itemWidgets.liveInsert(after, widget))
+        yield widget
+
