@@ -36,15 +36,15 @@ class Widget(xul.XULWidgetTemplate):
     return a deferred that calls back with the property value.
 
     Getter methods are named the same as the property in mixedCase.
-    For instance, to get the `title` property from a widget `w`::
+    For instance, to get the ``title`` property from a widget ``w``::
 
         def gotTitle(title):
             print title
         w.title().addCallback(gotTitle)
 
     Setter methods start with ``set``, followed by the name of the
-    property in CamelCase. For instance, to set the `title` property
-    of a widget `w`::
+    property in CamelCase. For instance, to set the ``title`` property
+    of a widget ``w``::
 
         def wasSet(title):
             print u'title was set to', title
@@ -60,7 +60,7 @@ class Widget(xul.XULWidgetTemplate):
     Server-side Events
     ==================
 
-    `nufox.widgets` aims to hide the details of typical
+    `nufox.widget` aims to hide the details of typical
     client-to-server event handling, choosing instead to expose events
     on the server side via the following mechanism.
 
@@ -82,9 +82,9 @@ class Widget(xul.XULWidgetTemplate):
     Dispatching
     -----------
 
-    To dispatch an event, widgets use their `dispatch` method,
+    To dispatch an event, widgets use their ``dispatch`` method,
     specifying the signal and optional arguments.  For instance, the
-    button widget above might have this `oncommand` handler::
+    button widget above might have this ``oncommand`` handler::
 
         def handle_onchange(self, text):
             self.dispatch(self.changed, text)
@@ -93,12 +93,12 @@ class Widget(xul.XULWidgetTemplate):
     ---------
 
     To listen for events from a particular widget, call the
-    dispatching widget's `connect` method, specifying the signal to
+    dispatching widget's ``connect`` method, specifying the signal to
     watch for and a callable.  The naming convention for callables
     that are methods is ``on_``, then optionally a name of a contained
     widget followed by ``_``, then the name of the signal. For
     instance, here is how a widget that contains an instance of
-    `TextBox` above could handle the `changed` signal::
+    ``TextBox`` above could handle the ``changed`` signal::
 
         def setup(self):
             # ...
@@ -112,7 +112,7 @@ class Widget(xul.XULWidgetTemplate):
     Disconnecting
     -------------
 
-    To reverse the operation of `connect`, use `disconnect`.  For
+    To reverse the operation of ``connect``, use ``disconnect``.  For
     example, to disconnect the connection made in the listening
     example above, do this::
 
@@ -122,15 +122,15 @@ class Widget(xul.XULWidgetTemplate):
     Client-to-Server Events
     =======================
 
-    When using `nufox.widgets`, you typically will not have to worry
+    When using `nufox.widget`, you typically will not have to worry
     about the lower-level details of common client-to-server events.
 
     When an event is fired on the client side that is connected to an
     event handler in the widget instance, the handler will be named
     starting with ``handle_``, then optionally a name of a contained
     widget followed by ``_``, then the lowercase name of the
-    client-side event.  For instance, here is how `onclick` would be
-    handled for an XUL node `okButton`::
+    client-side event.  For instance, here is how ``onclick`` would be
+    handled for an XUL node ``okButton``::
 
         def setup(self):
             # ...
@@ -185,16 +185,16 @@ class Widget(xul.XULWidgetTemplate):
         return result
 
     def connect(self, signal, callback):
-        """Connect the sending of `signal` by this widget to
-        `callback`."""
+        """Connect the sending of ``signal`` by this widget to
+        ``callback``."""
         louie.connect(callback, signal, self)
 
     def disconnect(self, signal, callback):
-        """Reverse of `connect`."""
+        """Reverse of ``connect``."""
         louie.disconnect(callback, signal, self)
 
     def dispatch(self, signal, *args):
-        """Dispatch `signal` with optional `args` to listeners."""
+        """Dispatch ``signal`` with optional ``args`` to listeners."""
         louie.send(signal, self, *args)
 
     def getTag(self):
