@@ -93,7 +93,8 @@ class Button(_Button):
         kwargs['jsOncommand'] = True
         super(Button, self).__init__(**kwargs)
 
-    def setup(self):
+    def preSetup(self):
+        super(Button, self).preSetup()
         self.connect(signal.jsOncommand, self.on_jsOncommand)
 
     def on_jsOncommand(self):
