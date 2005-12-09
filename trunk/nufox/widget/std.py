@@ -46,6 +46,14 @@ class Standard(Widget):
     def __handle_oncommand(self):
         self.dispatch(signal.jsOncommand)
 
+    # Make ``collapsed`` a bool.
+
+    def postGet_collapsed(self, value):
+        return _to_bool(value)
+
+    def preSet_collapsed(self, value):
+        return ('collapsed', _from_bool(value))
+
     # Make ``disabled`` a bool.
 
     def postGet_disabled(self, value):
@@ -64,14 +72,6 @@ class Standard(Widget):
 
     def preSet_enabled(self, value):
         return ('disabled', _from_bool(not value))
-
-    # Make ``collapsed`` a bool.
-
-    def postGet_collapsed(self, value):
-        return _to_bool(value)
-
-    def preSet_collapsed(self, value):
-        return ('collapsed', _from_bool(value))
 
 
 g = globals()
@@ -156,3 +156,17 @@ class Label(_Label):
 
     def postSet_value(self, value):
         self.dispatch(signal.changed, value)
+
+
+_TextBox = TextBox
+class TextBox(_TextBox):
+    """Text box."""
+
+    # Make ``readonly`` a bool.
+
+    def postGet_readonly(self, value):
+        return _to_bool(value)
+
+    def preSet_readonly(self, value):
+        return ('readonly', _from_bool(value))
+
