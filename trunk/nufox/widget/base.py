@@ -2,9 +2,9 @@
 
 import louie
 
-from twisted.internet.defer import succeed, Deferred, DeferredList
+from twisted.internet.defer import Deferred
 
-from nufox.defer import defgen, wait
+from nufox.defer import defgen, dlist, wait
 from nufox.widget import signal
 from nufox.widget.signal import Signal
 from nufox import xul
@@ -201,15 +201,16 @@ class Widget(xul.XULWidgetTemplate):
     def dispatch(self, signal, *args):
         """Dispatch ``signal`` with optional ``args`` to listeners.
 
-        Returns a DeferredList that calls back with a list of
+        Returns a deferred that calls back with a list of
         (receiver, result) tuples after all receivers have finished.
         """
         receiver_results = louie.send_minimal(signal, self, *args)
         results = []
         for receiver, result in receiver_results:
-            result = wait(result)
-            yield result
-            result = result.getResult()
+            if isinstance(result, Deferred):
+                result = wait(result)
+                yield result
+                result = result.getResult()
             results.append((receiver, result))
         yield results
 
