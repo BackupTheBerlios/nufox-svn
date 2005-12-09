@@ -56,16 +56,3 @@ class ItemGrid(std.Grid):
         yield wait(self.itemWidgets.liveAppend(widget))
         yield widget
 
-    @defgen
-    def insertItem(self, after, *widgets, **kwargs):
-        """Insert row after `after`."""
-        row = self.itemClass(**kwargs).append(*widgets)
-        yield wait(self.insertRow(after, row))
-        yield row
-
-    @defgen
-    def insertRow(self, after, widget):
-        """Insert `widget` after `after`."""
-        yield wait(self.itemWidgets.liveInsert(after, widget))
-        yield widget
-
