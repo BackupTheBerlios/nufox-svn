@@ -3,12 +3,14 @@ waitForDeferred."""
 
 import inspect
 
+from twisted.internet.defer import DeferredList
 from twisted.internet.defer import waitForDeferred as wait
 from twisted.internet.defer import _deferGenerator
 from twisted.python.util import mergeFunctionMetadata
 
 
 def defgen(f):
+    """Specialized deferredGenerator."""
     def unwindGenerator(*args, **kwargs):
         # Ignore kwargs that aren't in f's arg spec.  This is useful
         # for ignoring extra arguments for functions that act as Louie
@@ -21,3 +23,7 @@ def defgen(f):
         return _deferGenerator(f(*args, **newKwargs))
     return mergeFunctionMetadata(f, unwindGenerator)
 
+
+def dlist(*deferreds):
+    """Shortcut for DeferredList([deferreds])."""
+    return DeferredList(deferreds)
