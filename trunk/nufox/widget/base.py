@@ -204,7 +204,7 @@ class Widget(xul.XULWidgetTemplate):
         Returns a DeferredList that calls back with a list of
         (receiver, result) tuples after all receivers have finished.
         """
-        receiver_results = louie.send(signal, self, *args)
+        receiver_results = louie.send_minimal(signal, self, *args)
         results = []
         for receiver, result in receiver_results:
             result = wait(result)
@@ -217,32 +217,25 @@ class Widget(xul.XULWidgetTemplate):
         t = getattr(self.namespace, self.tag)
         return t(*self.xmlNamespaces, **self.kwargs)
 
-    @defgen
     def get(self, attr):
         fn = getattr(self, 'preGet_%s' % attr, None)
         if callable(fn):
-            attr = wait(fn())
-            yield attr
-            attr = attr.getResult()
-        value = wait(xul.XULWidgetTemplate.get(self, attr))
-        yield value
-        value = value.getResult()
+            attr = fn()
+        d = super(Widget, self).get(attr)
         fn = getattr(self, 'postGet_%s' % attr, None)
         if callable(fn):
-            value = wait(fn(value))
-            yield value
-            value = value.getResult()
-        yield value
+            d.addCallback(fn)
+        return d
 
-    @defgen
     def set(self, attr, value):
         fn = getattr(self, 'preSet_%s' % attr, None)
         if callable(fn):
-            value = wait(fn(value))
-            yield value
-            attr, value = value.getResult()
-        yield wait(xul.XULWidgetTemplate.set(self, attr, value))
+            attr, value = fn(value)
+        d = super(Widget, self).set(attr, value)
         fn = getattr(self, 'postSet_%s' % attr, None)
         if callable(fn):
-            yield wait(fn(value))
-        yield None
+            def returnValue(result):
+                fn(value)
+                return result
+            d.addCallback(returnValue)
+        return d

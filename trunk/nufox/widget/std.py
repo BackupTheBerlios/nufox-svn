@@ -25,9 +25,11 @@ class Standard(Widget):
 
     def __init__(self, **kwargs):
         h = self.__handlers = {}
-        if kwargs.pop('jsOnclick', True):
+        if kwargs.pop('jsOnclick', False):
             h['onclick'] = self.__handle_onclick
-        if kwargs.pop('jsOncommand', True):
+        if kwargs.pop('jsOndblclick', False):
+            h['ondblclick'] = self.__handle_ondblclick
+        if kwargs.pop('jsOncommand', False):
             h['oncommand'] = self.__handle_oncommand
         Widget.__init__(self, **kwargs)
 
@@ -35,42 +37,41 @@ class Standard(Widget):
         for jsEvent, handler in self.__handlers.iteritems():
             self.addHandler(jsEvent, handler)
 
-    @defgen
     def __handle_onclick(self):
-        yield wait(self.dispatch(signal.jsOnclick))
-        yield None
+        self.dispatch(signal.jsOnclick)
 
-    @defgen
+    def __handle_ondblclick(self):
+        self.dispatch(signal.jsOndblclick)
+
     def __handle_oncommand(self):
-        yield wait(self.dispatch(signal.jsOncommand))
-        yield None
+        self.dispatch(signal.jsOncommand)
 
     # Make ``disabled`` a bool.
 
     def postGet_disabled(self, value):
-        return succeed(_to_bool(value))
+        return _to_bool(value)
 
     def preSet_disabled(self, value):
-        return succeed(('disabled', _from_bool(value)))
+        return ('disabled', _from_bool(value))
 
     # At times it's handy to think of it as ``enabled`` instead.
 
     def preGet_enabled(self):
-        return succeed('disabled')
+        return 'disabled'
 
     def postGet_enabled(self, value):
-        return succeed(not _to_bool(value))
+        return not _to_bool(value)
 
-    def preSet_disabled(self, value):
-        return succeed(('disabled', _from_bool(not value)))
+    def preSet_enabled(self, value):
+        return ('disabled', _from_bool(not value))
 
     # Make ``collapsed`` a bool.
 
     def postGet_collapsed(self, value):
-        return succeed(_to_bool(value))
+        return _to_bool(value)
 
     def preSet_collapsed(self, value):
-        return succeed(('collapsed', _from_bool(value)))
+        return ('collapsed', _from_bool(value))
 
 
 g = globals()
@@ -88,13 +89,15 @@ class Button(_Button):
     - `nufox.widget.signal.clicked` when the button is clicked.
     """
 
+    def __init__(self, **kwargs):
+        kwargs['jsOncommand'] = True
+        super(Button, self).__init__(**kwargs)
+
     def setup(self):
         self.connect(signal.jsOncommand, self.on_jsOncommand)
 
-    @defgen
     def on_jsOncommand(self):
-        yield wait(self.dispatch(signal.clicked))
-        yield None
+        self.dispatch(signal.clicked)
 
 
 _Deck = Deck
@@ -152,4 +155,4 @@ class Label(_Label):
     """
 
     def postSet_value(self, value):
-        return self.dispatch(signal.changed, value)
+        self.dispatch(signal.changed, value)

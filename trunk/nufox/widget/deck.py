@@ -70,14 +70,14 @@ class DeckBrowser(std.Deck):
     def _updateBackForward(self, curIndex):
         if curIndex == 0 and self.curCanGoBack:
             self.curCanGoBack = False
-            yield wait(self.dispatch(self.canGoBack, False))
+            yield wait(self.dispatch(signal.canGoBack, False))
         elif curIndex != 0 and not self.curCanGoBack:
             self.curCanGoBack = True
-            yield wait(self.dispatch(self.canGoBack, True))
+            yield wait(self.dispatch(signal.canGoBack, True))
         if curIndex + 1 == len(self.children) and self.curCanGoForward:
             self.curCanGoForward = False
-            yield wait(self.dispatch(self.canGoForward, False))
+            yield wait(self.dispatch(signal.canGoForward, False))
         elif curIndex + 1 < len(self.children) and not self.curCanGoForward:
             self.curCanGoForward = True
-            yield wait(self.dispatch(self.canGoForward, True))
+            yield wait(self.dispatch(signal.canGoForward, True))
         yield curIndex

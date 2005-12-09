@@ -34,6 +34,11 @@ class jsOnclick(Signal):
     args = ()
 
 
+class jsOndblclick(Signal):
+    """A Javascript ondblclick event was received."""
+    args = ()
+
+
 class jsOncommand(Signal):
     """A Javascript oncommand event was received."""
     args = ()
