@@ -7,10 +7,13 @@ from nufox.xul import bigListOXulTags
 
 
 def _to_bool(value):
-    return value.lower() == u'true'
+    return str(value).lower() == 'true'
 
 def _from_bool(value):
-    return unicode(value).lower()
+    if value:
+        return u'true'
+    else:
+        return u''
 
 def _from_int_or_zero(value):
     if value:
@@ -60,6 +63,14 @@ class Standard(Widget):
 
     def preSet_disabled(self, value):
         return succeed(('disabled', _from_bool(not value)))
+
+    # Make ``collapsed`` a bool.
+
+    def postGet_collapsed(self, value):
+        return succeed(_to_bool(value))
+
+    def preSet_collapsed(self, value):
+        return succeed(('collapsed', _from_bool(value)))
 
 
 g = globals()
