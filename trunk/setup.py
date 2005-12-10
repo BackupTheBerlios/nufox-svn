@@ -39,7 +39,7 @@ setup(
 
     install_requires = [
     'Nevow == 0.6',
-    'Louie >= 1.0b2',
+    'Louie >= 1.0b3',
     ],
     zip_safe = False,
 
