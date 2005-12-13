@@ -28,7 +28,7 @@ class DeckBrowser(std.Deck):
         index = index.getResult()
         toRemove = self.children[index + 1:]
         yield wait(DeferredList([
-            self.removePage(page) for page in toRemove
+            self.removePage(rpage) for rpage in toRemove
             ]))
         # Next, add the new page.
         index = wait(std.Deck.addPage(self, page))
