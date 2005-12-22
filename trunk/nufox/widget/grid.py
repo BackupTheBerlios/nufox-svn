@@ -12,8 +12,10 @@ class ItemGrid(std.Grid):
 
     def preInit(self, kwargs):
         self.orientation = kwargs.pop('orientation', self.VERTICAL)
+        super(ItemGrid, self).preInit(kwargs)
 
     def setup(self):
+        super(ItemGrid, self).setup()
         columns = self.columns = std.Columns()
         rows = self.rows = std.Rows()
         if self.orientation is self.VERTICAL:

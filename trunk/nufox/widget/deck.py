@@ -10,7 +10,7 @@ class DeckBrowser(std.Deck):
     """A specialized deck that acts like a web browser."""
 
     def setup(self):
-        std.Deck.setup(self)
+        super(DeckBrowser, self).setup()
         self.curCanGoBack = False
         self.curCanGoForward = False
 

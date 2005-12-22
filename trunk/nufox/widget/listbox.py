@@ -19,6 +19,7 @@ class ListBox(Widget):
         args = ('item', )
 
     def setup(self):
+        super(ListBox, self).setup()
         self.widgetItem = {}
         # Handle selection.
         self.addHandler('onselect', self.handle_onselect)

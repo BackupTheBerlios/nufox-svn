@@ -167,16 +167,11 @@ class Widget(xul.XULWidgetTemplate):
         for key in kwargs.keys():
             if key != 'id':
                 self.set(key, kwargs[key])
-        self.preSetup()
         self.setup()
 
     def preInit(self, kwargs):
         """Override this if necessary to manipulate kwargs in
         subclasses during instantiation."""
-
-    def preSetup(self):
-        """Override this if necessary to manipulate widget during
-        instantiation."""
 
     def setup(self):
         """Override this if necessary to manipulate widget during

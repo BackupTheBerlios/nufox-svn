@@ -33,9 +33,10 @@ class Standard(Widget):
             h['oncommand'] = self.__handle_oncommand
         super(Standard, self).__init__(**kwargs)
 
-    def preSetup(self):
+    def setup(self):
         for jsEvent, handler in self.__handlers.iteritems():
             self.addHandler(jsEvent, handler)
+        super(Standard, self).setup()
 
     def __handle_onclick(self):
         self.dispatch(signal.jsOnclick)
@@ -93,8 +94,8 @@ class Button(_Button):
         kwargs['jsOncommand'] = True
         super(Button, self).__init__(**kwargs)
 
-    def preSetup(self):
-        super(Button, self).preSetup()
+    def setup(self):
+        super(Button, self).setup()
         self.connect(signal.jsOncommand, self.on_jsOncommand)
 
     def on_jsOncommand(self):
@@ -173,8 +174,8 @@ class MenuList(_MenuList):
         kwargs['jsOncommand'] = True
         super(MenuList, self).__init__(**kwargs)
 
-    def preSetup(self):
-        super(MenuList, self).preSetup()
+    def setup(self):
+        super(MenuList, self).setup()
         self.connect(signal.jsOncommand, self.on_jsOncommand)
 
     @defgen

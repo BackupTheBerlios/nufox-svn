@@ -9,7 +9,7 @@ class CustomMenuItem(std.MenuItem):
 
     def preInit(self, kwargs):
         self._name = kwargs.pop('name')
-        return super(CustomMenuItem, self).preInit(kwargs)
+        super(CustomMenuItem, self).preInit(kwargs)
 
     def setup(self):
         super(CustomMenuItem, self).setup()
