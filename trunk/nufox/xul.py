@@ -105,6 +105,10 @@ class XULPage(athena.LivePage):
         # Perform post-livepage stuff.
         self._initWidgets(self.window, 'setupLive')
 
+    def setup(self):
+        """Set up the page.  By default, does nothing.  Override in
+        subclasses."""
+
     def _initWidgets(self, widget, methodName=None, parent=None):
         """Set `pageCtx` of `widget` and its children to this page,
         and keep track of them for the purposes of handlers and remote
