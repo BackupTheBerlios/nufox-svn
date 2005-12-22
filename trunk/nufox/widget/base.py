@@ -162,6 +162,11 @@ class Widget(xul.XULWidgetTemplate):
         self.__receivers = []
         self.preInit(kwargs)
         xul.XULWidgetTemplate.__init__(self, **kwargs)
+        # Set all remaining kwargs-based attributes using set/get.
+        kwargs = self.kwargs
+        for key in kwargs.keys():
+            if key != 'id':
+                self.set(key, kwargs[key])
         self.preSetup()
         self.setup()
 

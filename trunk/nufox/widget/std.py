@@ -31,7 +31,7 @@ class Standard(Widget):
             h['ondblclick'] = self.__handle_ondblclick
         if kwargs.pop('jsOncommand', False):
             h['oncommand'] = self.__handle_oncommand
-        Widget.__init__(self, **kwargs)
+        super(Standard, self).__init__(**kwargs)
 
     def preSetup(self):
         for jsEvent, handler in self.__handlers.iteritems():
@@ -157,6 +157,45 @@ class Label(_Label):
 
     def postSet_value(self, value):
         self.dispatch(signal.changed, value)
+
+
+_MenuList = MenuList
+class MenuList(_MenuList):
+    """Menu list.
+
+    Dispatches:
+
+    - `nufox.widget.signal.itemSelected` when the menu item selection
+      changes.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs['jsOncommand'] = True
+        super(MenuList, self).__init__(**kwargs)
+
+    def preSetup(self):
+        super(MenuList, self).preSetup()
+        self.connect(signal.jsOncommand, self.on_jsOncommand)
+
+    @defgen
+    def on_jsOncommand(self):
+        value = wait(self.get('value'))
+        yield value
+        value = value.getResult()
+        self.dispatch(signal.itemSelected, value)
+        yield None
+
+
+_MenuItem = MenuItem
+class MenuItem(_MenuItem):
+
+    # Make ``selected`` a bool.
+
+    def postGet_selected(self, value):
+        return _to_bool(value)
+
+    def preSet_selected(self, value):
+        return ('selected', _from_bool(value))
 
 
 _TextBox = TextBox

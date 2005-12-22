@@ -29,6 +29,11 @@ class closed(Signal):
     args = ()
 
 
+class itemSelected(Signal):
+    """A menu item was selected."""
+    args = ('value', )
+
+
 class jsOnclick(Signal):
     """A Javascript onclick event was received."""
     args = ()
