@@ -103,10 +103,15 @@ class XULPage(athena.LivePage):
             self.window.setDimensions(self.window.kwargs.get('height'),
                                       self.window.kwargs.get('width'))
         # Perform post-livepage stuff.
+        self.setupLive()
         self._initWidgets(self.window, 'setupLive')
 
     def setup(self):
         """Set up the page.  By default, does nothing.  Override in
+        subclasses."""
+
+    def setupLive(self):
+        """Set up the page after it is at the client.  Override in
         subclasses."""
 
     def _initWidgets(self, widget, methodName=None, parent=None):
@@ -356,9 +361,12 @@ class GenericWidget(object):
                             marshal(child)
             marshal(self)
             d = self.callGlobal('appendNodes', newNodes)
-            def returnSelf(result):
+            def initNodes(result):
+                _initWidgets = self.pageCtx._initWidgets
+                for w in widgets:
+                    _initWidgets(w, 'setupLive')
                 return self
-            d.addCallback(returnSelf)
+            d.addCallback(initNodes)
             return d
 
     def liveInsert(self, before, *widgets):
@@ -420,7 +428,8 @@ class GenericWidget(object):
 
     def callMethod(self, method, *args):
         """call method with args on this node."""
-        return self.callGlobal('callMethod', self.id, method, args)
+        return self.callGlobal(
+            'callMethod', self.id, unicode(method, 'ascii'), args)
 
     @property
     def callGlobal(self):

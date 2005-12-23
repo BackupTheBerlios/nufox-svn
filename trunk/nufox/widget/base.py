@@ -177,6 +177,10 @@ class Widget(xul.XULWidgetTemplate):
         """Override this if necessary to manipulate widget during
         instantiation."""
 
+    def setupLive(self):
+        """Override this if necessary to manipulate widget after going
+        live."""
+
     def close(self):
         """Close this widget, and dispatch a signal about its closure
         once the operation has completed."""
