@@ -111,7 +111,8 @@ class NufoxExamples(xul.XULPage):
     child_docs = static.File(util.sibpath(__file__, '../doc/html'))
 
     def setup(self):
-        window = self.window = Window(title=u'Nufox Examples')
+        window = self.window = Window(title=u'Nufox Examples',
+                                      height=600, width=800)
         popupset = self.popupset = xul.PopupSet()
         mainLayout = self.mainLayout = xul.HBox(flex=1)
         leftSide = self.leftSide = xul.VBox(flex=10)
@@ -159,6 +160,9 @@ class NufoxExamples(xul.XULPage):
             tt.append(xul.Label(
                 value=exampleViewer.__doc__ or u'No Description'))
             popupset.append(tt)
+
+    def setupLive(self):
+        self.window.callMethod('setResizeable', True)
 
     def exampleClicked(self):
         self.exampleBox.getAttr('value').addCallbacks(self.selectLink, log.err)
