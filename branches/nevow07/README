@@ -1,0 +1,25 @@
+GENERAL INFORMATION:
+
+website: nufox.berlios.de
+contact: tjstebbing@gmail.com
+licence: LGPL, (c) contributors
+
+depends: 
+    Python 2.4.2+       http://python.org
+    twisted 2.1.0       http://twistedmatrix.com 
+    Nevow 0.6.0         http://divmod.org/projects/nevow
+    Louie               http://louie.berlios.de/
+    
+To run the examples:
+
+> twistd -noy examples.tac
+> firefox http://localhost:8080
+
+DEVELOPER NOTES:
+
+If you wish to become a developer, it is important to understand that all 
+your contributions (including any initial patches you send to the bug 
+tracker) will have to be licenced under the LGPL.
+
+Nufox conforms to the Twisted code conventions, see:
+http://twistedmatrix.com/projects/core/documentation/howto/policy/coding-standard.html
